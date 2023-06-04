@@ -32,7 +32,6 @@ class PriceCalc
      */
     public static function getValueOfVAT(PriceInterface $price): int|float
     {
-        var_dump($price->getVAT());
         if ($price->getVAT()->isNone() || $price->getVAT()->isCombined() || $price->getVAT()->isAny()) {
             return 0;
         }
@@ -96,7 +95,10 @@ class PriceCalc
                 continue;
             }
 
-            $addend->setNestedPrice($addend->getVAT()->getCategory() ?? "", clone $addend);
+            $newAddend = clone $addend;
+
+            $addend->getNumericalValue()->multiply(0);
+            $addend->setNestedPrice($addend->getVAT()->getCategory() ?? "", $newAddend);
 
             $vat = VAT::get(
                 $addend->getVAT()->getCountryCode(),

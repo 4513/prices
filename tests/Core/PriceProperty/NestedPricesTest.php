@@ -29,6 +29,10 @@ class NestedPricesTest extends TestCase
      * @small
      *
      * @covers ::getVAT
+     * @covers ::__clone
+     * @covers \MiBo\Prices\Traits\PriceHelper::setNestedPrice
+     * @covers \MiBo\Prices\Traits\PriceHelper::getNestedPrice
+     * @covers \MiBo\Prices\Traits\PriceHelper::getNestedPrices
      *
      * @return void
      */
@@ -38,5 +42,6 @@ class NestedPricesTest extends TestCase
         $price->add(new Price(1, Currency::get()));
 
         $this->assertSame(101, $price->getValue());
+        $this->assertSame([], $price->getNestedPrices());
     }
 }
