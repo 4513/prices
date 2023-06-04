@@ -23,6 +23,13 @@ use ValueError;
  */
 class PriceCalc
 {
+    /**
+     * Returns the value of the VAT of the amount.
+     *
+     * @param \MiBo\Prices\Contracts\PriceInterface $price
+     *
+     * @return int|float
+     */
     public static function getValueOfVAT(PriceInterface $price): int|float
     {
         if ($price->getVAT()->isNone() || $price->getVAT()->isCombined() || $price->getVAT()->isAny()) {
@@ -33,8 +40,10 @@ class PriceCalc
     }
 
     /**
-     * @param \MiBo\Prices\Contracts\PriceInterface $addend
-     * @param \MiBo\Prices\Contracts\PriceInterface ...$addends
+     * Adds multiple prices together.
+     *
+     * @param \MiBo\Prices\Contracts\PriceInterface $addend The first price to add.
+     * @param \MiBo\Prices\Contracts\PriceInterface ...$addends The rest of the prices to add.
      *
      * @return array{0: \MiBo\Prices\Contracts\PriceInterface, 1: \MiBo\VAT\VAT}
      */
@@ -101,6 +110,14 @@ class PriceCalc
         ];
     }
 
+    /**
+     * Subtracts multiple prices from the minuend.
+     *
+     * @param \MiBo\Prices\Contracts\PriceInterface $minuend The price to subtract from.
+     * @param \MiBo\Prices\Contracts\PriceInterface ...$subtrahends The rest of the prices to subtract.
+     *
+     * @return \MiBo\Prices\Contracts\PriceInterface
+     */
     public static function subtract(PriceInterface $minuend, PriceInterface ...$subtrahends): PriceInterface
     {
         $vat      = $minuend->getVAT();
@@ -112,9 +129,11 @@ class PriceCalc
                 $subtrahend->convertToUnit($minuend->getUnit());
             }
 
+            // Subtrahend has the same VAT or 'any' VAT, thus we can subtract it directly.
             if (!$combined && ($vat->is($subtrahend->getVAT()) || $subtrahend->getVAT()->isAny())) {
                 $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
 
+                // Subtrahend is bigger and so we cannot continue.
                 if ($minuend->getValue() < 0) {
                     // @phpcs:ignore
                     throw new ValueError("Subtracting too much! Cannot subtract a price that is higher than the minuend.");
@@ -123,12 +142,14 @@ class PriceCalc
                 continue;
             }
 
-            if ($combined && $vat->isCombined()) {
+            // Subtrahend has combined VAT. We can loop all of its prices and subtract them one by one.
+            if ($combined && $subtrahend->getVAT()->isCombined()) {
                 $minuend = self::subtract($minuend, ...$subtrahend->getNestedPrices());
 
                 continue;
             }
 
+            // Subtrahend has any VAT. We loop its prices and try to subtract from all possible prices.
             if ($subtrahend->getVAT()->isAny()) {
                 $success = false;
 
@@ -138,11 +159,14 @@ class PriceCalc
 
                         $success = true;
                     } catch (ValueError) {
+                        //  The subtrahend is bigger, but that is not a problem for now. We reset the minuend
+                        // and subtract the subtrahend by the minuend's value, and then we continue again.
                         $subtrahend->getNumericalValue()->subtract($price->getNumericalValue());
                         $minuend->getNestedPrice($category)->multiply(0);
                     }
                 }
 
+                // The subtrahend has been bigger.
                 if (!$success) {
                     // @phpcs:ignore
                     throw new ValueError("Subtracting too much! Cannot subtract a price that is higher than the minuend.");
@@ -153,11 +177,13 @@ class PriceCalc
                 continue;
             }
 
+            // Subtrahend has a different VAT rate.
             if ($minuend->getNestedPrice($subtrahend->getVAT()->getCategory()) === null) {
                 // @phpcs:ignore
                 throw new ValueError("Subtracting from nothing! Cannot subtract from a price that does not have a price with the same VAT rate.");
             }
 
+            // Minuend has combined VAT while the subtrahend has a specific one. We subtract only the correct price.
             $minuend->getNestedPrice($subtrahend->getVAT()->getCategory())->subtract($subtrahend);
             $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
         }

@@ -44,7 +44,10 @@ interface PriceInterface extends NumericalProperty
     public function getValueOfVAT(): int|float;
 
     /**
-     * @param string $category
+     *  The Price might be a group of prices with different VAT rates. This method adds or sets the nested
+     * price. If the price already exists, it is added to the existing one.
+     *
+     * @param string $category VAT (product) category.
      * @param \MiBo\Prices\Price $price
      *
      * @return void
@@ -52,6 +55,8 @@ interface PriceInterface extends NumericalProperty
     public function setNestedPrice(string $category, PriceInterface $price): void;
 
     /**
+     * Retrieves the nested price by the product category.
+     *
      * @param string $category
      *
      * @return \MiBo\Prices\Contracts\PriceInterface|null
@@ -59,11 +64,15 @@ interface PriceInterface extends NumericalProperty
     public function getNestedPrice(string $category): ?PriceInterface;
 
     /**
+     * All nested prices.
+     *
      * @return array<string, \MiBo\Prices\Contracts\PriceInterface>
      */
     public function getNestedPrices(): array;
 
     /**
+     * Changes the Price (normally the VAT) for the given country code.
+     *
      * @param string $countryCode
      *
      * @return static

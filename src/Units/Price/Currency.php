@@ -52,6 +52,7 @@ class Currency implements NumericalUnit, CurrencyInterface
     /** @var array<string, static> */
     protected static array $instances = [];
 
+    /** @var non-empty-string */
     public static string $defaultCurrency = 'EUR';
 
     private static ?CurrencyProvider $currencyProvider = null;
@@ -67,15 +68,20 @@ class Currency implements NumericalUnit, CurrencyInterface
 
     /**
      * @inheritDoc
+     *
+     * @param non-empty-string|null $currencyCode
      */
     public static function get(?string $currencyCode = null): static
     {
         $currencyCode = $currencyCode ?? static::$defaultCurrency;
 
+        if (self::$currencyProvider === null) {
+            self::$currencyProvider = new ISOCurrencyProvider(new ISOListLoader(), new NullLogger());
+        }
+
         if (!isset(self::$instances[$currencyCode])) {
             /** @phpstan-ignore-next-line */
             self::$instances[$currencyCode] = new static(
-                /** @phpstan-ignore-next-line */
                 self::$currencyProvider->findByAlphabeticalCode($currencyCode)
             );
         }
@@ -91,6 +97,13 @@ class Currency implements NumericalUnit, CurrencyInterface
         return Price::class;
     }
 
+    /**
+     * Changes the currency provider from which the currencies are loaded.
+     *
+     * @param \MiBo\Currencies\CurrencyProvider|null $currencyProvider New currency provider.
+     *
+     * @return \MiBo\Currencies\CurrencyProvider|null Previous currency provider.
+     */
     public static function setCurrencyProvider(?CurrencyProvider $currencyProvider): ?CurrencyProvider
     {
         $current                = self::$currencyProvider;
