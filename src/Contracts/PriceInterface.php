@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Contracts;
 
-use MiBo\Prices\Price;
 use MiBo\Properties\Contracts\NumericalProperty;
 use MiBo\VAT\VAT;
 

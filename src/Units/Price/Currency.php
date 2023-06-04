@@ -49,24 +49,33 @@ class Currency implements NumericalUnit, CurrencyInterface
 
     private CurrencyInterface $currency;
 
+    /** @var array<string, static> */
     protected static array $instances = [];
 
     public static string $defaultCurrency = 'EUR';
 
     private static ?CurrencyProvider $currencyProvider = null;
 
-    public function __construct(?CurrencyInterface $currency = null)
+    /**
+     * @param \MiBo\Currencies\CurrencyInterface $currency
+     */
+    public function __construct(CurrencyInterface $currency)
     {
         $this->currency           = $currency;
         self::$currencyProvider ??= new ISOCurrencyProvider(new ISOListLoader(), new NullLogger());
     }
 
+    /**
+     * @inheritDoc
+     */
     public static function get(?string $currencyCode = null): static
     {
         $currencyCode = $currencyCode ?? static::$defaultCurrency;
 
         if (!isset(self::$instances[$currencyCode])) {
-            self::$instances[$currencyCode] = new self(
+            /** @phpstan-ignore-next-line */
+            self::$instances[$currencyCode] = new static(
+                /** @phpstan-ignore-next-line */
                 self::$currencyProvider->findByAlphabeticalCode($currencyCode)
             );
         }
@@ -74,6 +83,9 @@ class Currency implements NumericalUnit, CurrencyInterface
         return self::$instances[$currencyCode];
     }
 
+    /**
+     * @inheritDoc
+     */
     public static function getQuantityClassName(): string
     {
         return Price::class;
@@ -87,26 +99,41 @@ class Currency implements NumericalUnit, CurrencyInterface
         return $current;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getAlphabeticalCode(): string
     {
         return $this->currency->getAlphabeticalCode();
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getNumericalCode(): string
     {
         return $this->currency->getNumericalCode();
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getMinorUnitRate(): ?int
     {
         return $this->currency->getMinorUnitRate();
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getName(): string
     {
         return $this->currency->getName();
     }
 
+    /**
+     * @inheritDoc
+     */
     public function is(Unit|CurrencyInterface $unit): bool
     {
         if (!$unit instanceof CurrencyInterface) {

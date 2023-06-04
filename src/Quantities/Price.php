@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace MiBo\Prices\Quantities;
 
@@ -16,7 +16,7 @@ use MiBo\Properties\Traits\QuantityHelper;
  *
  * @author Michal Boris <michal.boris27@gmail.com>
  *
- * @since x.x
+ * @since 0.1
  *
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise.
  */
@@ -24,16 +24,25 @@ class Price implements Quantity
 {
     use QuantityHelper;
 
+    /**
+     * @inheritDoc
+     */
     public static function getDimensionSymbol(): string
     {
         return "PRICE";
     }
 
+    /**
+     * @inheritDoc
+     */
     public static function getDefaultProperty(): string
     {
         return \MiBo\Prices\Price::class;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected static function getInitialUnit(): Unit
     {
         return Currency::get();

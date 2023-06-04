@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace MiBo\Prices\Calculators;
 
 use MiBo\Prices\Contracts\PriceInterface;
-use MiBo\Prices\Price;
-use MiBo\Properties\Contracts\NumericalProperty as ContractNumericalProperty;
 use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\Resolvers\ProxyResolver;
 use MiBo\VAT\VAT;
@@ -19,7 +17,7 @@ use ValueError;
  *
  * @author Michal Boris <michal.boris27@gmail.com>
  *
- * @since x.x
+ * @since 0.1
  *
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise.
  */
