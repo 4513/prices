@@ -50,5 +50,17 @@ interface PriceInterface extends NumericalProperty
      *
      * @return void
      */
-    public function setNestedPrice(string $category, Price $price): void;
+    public function setNestedPrice(string $category, PriceInterface $price): void;
+
+    /**
+     * @param string $category
+     *
+     * @return \MiBo\Prices\Contracts\PriceInterface|null
+     */
+    public function getNestedPrice(string $category): ?PriceInterface;
+
+    /**
+     * @return array<string, \MiBo\Prices\Contracts\PriceInterface>
+     */
+    public function getNestedPrices(): array;
 }

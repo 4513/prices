@@ -7,6 +7,7 @@ namespace MiBo\Prices;
 use DateTime;
 use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Contracts\PriceInterface;
+use MiBo\Prices\Traits\PriceHelper;
 use MiBo\Properties\Contracts\NumericalProperty as ContractNumericalProperty;
 use MiBo\Properties\Contracts\Unit;
 use MiBo\Properties\NumericalProperty;
@@ -29,8 +30,7 @@ use ValueError;
  */
 class Price extends NumericalProperty implements PriceInterface
 {
-    /** @var array<string, \MiBo\Prices\Price> */
-    protected array $prices = [];
+    use PriceHelper;
 
     protected Value $vatValue;
 
@@ -70,7 +70,13 @@ class Price extends NumericalProperty implements PriceInterface
             throw new ValueError();
         }
 
-        return parent::subtract($value);
+        if (!$value instanceof Price) {
+            $value = new self($value, $this->unit, $this->vat, $this->time);
+        }
+
+        PriceCalc::subtract($this, $value);
+
+        return $this;
     }
 
     /**
@@ -159,20 +165,6 @@ class Price extends NumericalProperty implements PriceInterface
         }
 
         return $value;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function setNestedPrice(string $category, Price $price): void
-    {
-        if (!isset($this->prices[$category])) {
-            $this->prices[$category] = $price;
-
-            return;
-        }
-
-        $this->prices[$category]->add($price);
     }
 
     /**
