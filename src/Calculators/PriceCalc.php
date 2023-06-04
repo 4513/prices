@@ -32,11 +32,12 @@ class PriceCalc
      */
     public static function getValueOfVAT(PriceInterface $price): int|float
     {
+        var_dump($price->getVAT());
         if ($price->getVAT()->isNone() || $price->getVAT()->isCombined() || $price->getVAT()->isAny()) {
             return 0;
         }
 
-        return ($price->getValue() / 100) * ProxyResolver::getPercentageOf($price->getVAT());
+        return $price->getValue() * ProxyResolver::getPercentageOf($price->getVAT());
     }
 
     /**

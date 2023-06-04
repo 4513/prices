@@ -149,10 +149,6 @@ class Currency implements NumericalUnit, CurrencyInterface
      */
     public function is(Unit|CurrencyInterface $unit): bool
     {
-        if (!$unit instanceof CurrencyInterface) {
-            return false;
-        }
-
-        return $this->currency->is($unit);
+        return $unit instanceof CurrencyInterface && $this->currency->is($unit);
     }
 }

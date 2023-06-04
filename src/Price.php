@@ -16,6 +16,7 @@ use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\Resolvers\ProxyResolver;
 use MiBo\VAT\VAT;
 use ValueError;
+use function PHPStan\dumpType;
 
 /**
  * Class Price
@@ -31,8 +32,6 @@ use ValueError;
 class Price extends NumericalProperty implements PriceInterface
 {
     use PriceHelper;
-
-    protected Value $vatValue;
 
     protected VAT $vat;
 
@@ -57,29 +56,6 @@ class Price extends NumericalProperty implements PriceInterface
             new Value($value, $unit->getMinorUnitRate() ?? 0, 0);
 
         parent::__construct($value, $unit);
-
-        $this->vatValue = (new Value($this->getNumericalValue()->getValue(), $unit->getMinorUnitRate() ?? 0, 0))
-            ->multiply(ProxyResolver::getPercentageOf($this->vat, $time))
-            ->divide(100);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function subtract(ContractNumericalProperty|float|int $value): static
-    {
-        // Adding float or int with no VAT specified is forbidden when having combined VAT.
-        if (!$value instanceof Price && $this->getVAT()->isCombined()) {
-            throw new ValueError();
-        }
-
-        if (!$value instanceof Price) {
-            $value = new self($value, $this->unit, $this->vat, $this->time);
-        }
-
-        PriceCalc::subtract($this, $value);
-
-        return $this;
     }
 
     /**
@@ -108,6 +84,25 @@ class Price extends NumericalProperty implements PriceInterface
         ] = PriceCalc::add($this, $value);
 
         $this->vat = $vat;
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function subtract(ContractNumericalProperty|float|int $value): static
+    {
+        // Adding float or int with no VAT specified is forbidden when having combined VAT.
+        if (!$value instanceof Price && $this->getVAT()->isCombined()) {
+            throw new ValueError();
+        }
+
+        if (!$value instanceof Price) {
+            $value = new self($value, $this->unit, $this->vat, $this->time);
+        }
+
+        PriceCalc::subtract($this, $value);
 
         return $this;
     }
@@ -175,7 +170,7 @@ class Price extends NumericalProperty implements PriceInterface
      */
     public function forCountry(string $countryCode): static
     {
-        $this->vat = ProxyResolver::retrieveByCategory($countryCode, $this->vat->getCategory());
+        $this->vat = ProxyResolver::retrieveByCategory($this->vat->getCategory() ?? "", $countryCode);
 
         return $this;
     }
