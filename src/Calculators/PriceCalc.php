@@ -8,6 +8,7 @@ use MiBo\Prices\Contracts\PriceInterface;
 use MiBo\Prices\Price;
 use MiBo\Properties\Contracts\NumericalProperty as ContractNumericalProperty;
 use MiBo\VAT\Enums\VATRate;
+use MiBo\VAT\Resolvers\ProxyResolver;
 use MiBo\VAT\VAT;
 use ValueError;
 
@@ -26,7 +27,11 @@ class PriceCalc
 {
     public static function getValueOfVAT(PriceInterface $price): int|float
     {
+        if ($price->getVAT()->isNone() || $price->getVAT()->isCombined() || $price->getVAT()->isAny()) {
+            return 0;
+        }
 
+        return ($price->getValue() / 100) * ProxyResolver::getPercentageOf($price->getVAT());
     }
 
     /**
@@ -104,6 +109,11 @@ class PriceCalc
         $combined = $vat->isCombined();
 
         foreach ($subtrahends as $subtrahend) {
+            // Converting the Price into same currency.
+            if (!$subtrahend->getUnit()->is($minuend->getUnit())) {
+                $subtrahend->convertToUnit($minuend->getUnit());
+            }
+
             if (!$combined && ($vat->is($subtrahend->getVAT()) || $subtrahend->getVAT()->isAny())) {
                 $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
 
@@ -155,10 +165,5 @@ class PriceCalc
         }
 
         return $minuend;
-    }
-
-    public static function merge(bool $add = true, PriceInterface ...$prices): PriceInterface
-    {
-
     }
 }

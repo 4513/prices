@@ -12,6 +12,7 @@ use MiBo\Properties\Contracts\NumericalProperty as ContractNumericalProperty;
 use MiBo\Properties\Contracts\Unit;
 use MiBo\Properties\NumericalProperty;
 use MiBo\Properties\Value;
+use MiBo\VAT\Contracts\Resolver;
 use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\Resolvers\ProxyResolver;
 use MiBo\VAT\VAT;
@@ -165,6 +166,16 @@ class Price extends NumericalProperty implements PriceInterface
         }
 
         return $value;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function forCountry(string $countryCode): static
+    {
+        $this->vat = ProxyResolver::retrieveByCategory($countryCode, $this->vat->getCategory());
+
+        return $this;
     }
 
     /**

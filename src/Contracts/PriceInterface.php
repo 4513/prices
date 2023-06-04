@@ -63,4 +63,11 @@ interface PriceInterface extends NumericalProperty
      * @return array<string, \MiBo\Prices\Contracts\PriceInterface>
      */
     public function getNestedPrices(): array;
+
+    /**
+     * @param string $countryCode
+     *
+     * @return static
+     */
+    public function forCountry(string $countryCode): static;
 }
