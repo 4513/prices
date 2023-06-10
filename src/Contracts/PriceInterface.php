@@ -48,7 +48,7 @@ interface PriceInterface extends NumericalProperty
      * price. If the price already exists, it is added to the existing one.
      *
      * @param string $category VAT (product) category.
-     * @param \MiBo\Prices\Price $price
+     * @param \MiBo\Prices\Contracts\PriceInterface $price
      *
      * @return void
      */

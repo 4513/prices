@@ -20,7 +20,7 @@ use MiBo\Properties\Value;
  */
 trait PriceHelper
 {
-    /** @var array<string, \MiBo\Prices\Price> */
+    /** @var array<string, \MiBo\Prices\Contracts\PriceInterface> */
     protected array $prices = [];
 
     /**

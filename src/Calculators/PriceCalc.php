@@ -102,7 +102,7 @@ class PriceCalc
                 continue;
             }
 
-            $addend->setNestedPrice($addend->getVAT()->getCategory() ?? "", $newAddend);
+            $addend->setNestedPrice($addend->getVAT()->getCategory() ?? "", $newAddend ?? clone $addend);
 
             $vat = VAT::get(
                 $addend->getVAT()->getCountryCode(),
@@ -162,9 +162,9 @@ class PriceCalc
 
                 foreach ($minuend->getNestedPrices() as $category => $price) {
                     try {
-                        $currentValue = $minuend->getNestedPrice("$category")->getValue();
+                        $currentValue = $minuend->getNestedPrice("$category")?->getValue();
 
-                        $minuend->getNestedPrice("$category")->subtract($subtrahend);
+                        $minuend->getNestedPrice("$category")?->subtract($subtrahend);
 
                         $success = true;
                     } catch (ValueError) {
@@ -194,7 +194,7 @@ class PriceCalc
                     continue;
                 }
 
-                $minuend->getNestedPrice("$category")->subtract($subtrahend);
+                $minuend->getNestedPrice("$category")?->subtract($subtrahend);
                 $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
 
                 continue 2;

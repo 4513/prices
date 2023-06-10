@@ -89,6 +89,8 @@ class Price extends NumericalProperty implements PriceInterface
 
     /**
      * @inheritDoc
+     *
+     * @param int|float|\MiBo\Prices\Price $value
      */
     public function subtract(ContractNumericalProperty|float|int $value): static
     {
@@ -161,11 +163,6 @@ class Price extends NumericalProperty implements PriceInterface
         $value = 0;
 
         foreach ($this->prices as $price) {
-            $v  = $price->getVAT()->getRate();
-            $v1 = $price->getValue();
-            $v2 = PriceCalc::getValueOfVAT($price);
-            $v3 = ProxyResolver::getPercentageOf($price->getVAT());
-
             $value += PriceCalc::getValueOfVAT($price);
         }
 
@@ -193,6 +190,6 @@ class Price extends NumericalProperty implements PriceInterface
     {
         parent::__clone();
 
-        $this->prices = array_map(fn (Price $price) => clone $price, $this->prices);
+        $this->prices = array_map(fn (PriceInterface $price) => clone $price, $this->prices);
     }
 }
