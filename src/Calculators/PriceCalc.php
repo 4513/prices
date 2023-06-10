@@ -173,6 +173,8 @@ class PriceCalc
                         $subtrahend->getNumericalValue()
                             ->subtract($currentValue ?? 0, $minuend->getUnit()->getMinorUnitRate());
                         $minuend->getNestedPrice("$category")->multiply(0);
+                        $minuend->getNumericalValue()
+                            ->subtract($currentValue ?? 0, $minuend->getUnit()->getMinorUnitRate());
                     }
                 }
 
