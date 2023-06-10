@@ -154,6 +154,11 @@ class Price extends NumericalProperty implements PriceInterface
         $value = 0;
 
         foreach ($this->prices as $price) {
+            $v = $price->getVAT()->getRate();
+            $v1 = $price->getValue();
+            $v2 = PriceCalc::getValueOfVAT($price);
+            $v3 = ProxyResolver::getPercentageOf($price->getVAT());
+
             $value += PriceCalc::getValueOfVAT($price);
         }
 

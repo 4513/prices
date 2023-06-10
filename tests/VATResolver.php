@@ -31,16 +31,25 @@ class VATResolver implements Resolver, Convertor
     public static function retrieveByCategory(string $category, string $countryCode): VAT
     {
         if (empty(self::getVATs()[$countryCode][$category])) {
-            return VAT::get($countryCode, VATRate::STANDARD);
+            return VAT::get($countryCode, VATRate::STANDARD, $category);
         }
 
-        return VAT::get($countryCode, self::getVATs()[$countryCode][$category]);
+        return VAT::get($countryCode, self::getVATs()[$countryCode][$category], $category);
 
 //        return match ($category) {
 //            "123"   => VAT::get($countryCode),
 //            "456"   => VAT::get($countryCode, VATRate::NONE),
 //            default => VAT::get($countryCode, VATRate::SECOND_REDUCED),
 //        };
+        /**
+         * 10 11.5
+         * 15 17.25
+         * 20 22
+         * 25 27.5
+         * 30 30
+         *
+         * 25 27.5
+         */
     }
 
     public static function getPercentageOf(VAT $vat, ?DateTime $time = null): float|int
@@ -66,7 +75,7 @@ class VATResolver implements Resolver, Convertor
             ],
             "SVK" => [
                 "07" => VATRate::REDUCED,
-                "08" => VATRate::REDUCED,
+                "08" => VATRate::REDUCED, // 36.75
             ],
         ];
     }
@@ -85,9 +94,9 @@ class VATResolver implements Resolver, Convertor
             ],
             "SVK" => [
                 VATRate::STANDARD->name => 0.20,
-                VATRate::REDUCED->name => 0.10,
-                VATRate::NONE->name    => 0,
-            ]
+                VATRate::REDUCED->name  => 0.10,
+                VATRate::NONE->name     => 0,
+            ],
         ];
     }
 }
