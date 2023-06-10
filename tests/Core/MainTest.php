@@ -57,8 +57,8 @@ class MainTest extends TestCase
 
         $this->assertSame(135, $price->getValue());
 
-        // The prices are all in CZK, however one of the price has VAT from Slovakia
-        $this->assertSame(135.75, $price->getValueWithVAT());
+        // Price with CZE VAT, because using already used VAT
+        $this->assertSame(144.75, $price->getValueWithVAT());
     }
 
     /**

@@ -89,21 +89,24 @@ class PriceCalc
             }
 
             // Addend has a different VAT rate. Transforming VAT rate into Combined.
+            if ($addend->getVAT()->isNotCombined()) {
+                $newAddend = clone $addend;
+
+                $addend->getNumericalValue()->multiply(0);
+            }
+
             $addend->setNestedPrice($subAddend->getVAT()->getCategory() ?? "", clone $subAddend);
 
             if ($addend->getVAT()->isCombined()) {
                 continue;
             }
 
-            $newAddend = clone $addend;
-
-            $addend->getNumericalValue()->multiply(0);
             $addend->setNestedPrice($addend->getVAT()->getCategory() ?? "", $newAddend);
 
             $vat = VAT::get(
                 $addend->getVAT()->getCountryCode(),
                 VATRate::COMBINED,
-                $addend->getVAT()->getCategory(),
+                "",
             );
         }
 
