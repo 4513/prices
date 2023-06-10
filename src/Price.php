@@ -143,6 +143,13 @@ class Price extends NumericalProperty implements PriceInterface
      */
     public function getValueWithVAT(): int|float
     {
+        $withoutVAT = $this->getValue();
+        $vat        = $this->getValueOfVAT();
+
+        if ($withoutVAT === 0 && ($vat === 0 || $vat === 0.0)) {
+            return 0;
+        }
+
         return $this->getValue() + $this->getValueOfVAT();
     }
 

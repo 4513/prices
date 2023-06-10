@@ -59,15 +59,16 @@ class PriceCalc
             }
 
             // Addend has combined VAT. Using it instead of the current one.
-            if ($subAddend->getVAT()->isCombined()) {
-                $temporarySelf = clone $addend;
+            if ($subAddend->getVAT()->isCombined() && !$combined) {
+                foreach ($subAddend->getNestedPrices() as $price) {
+                    $addend->add($price);
+                }
 
-                $addend->getNumericalValue()
-                    ->multiply(0)
-                    ->add($subAddend->getNumericalValue());
-                $addend->add($temporarySelf);
-
-                $combined = true;
+                $vat = VAT::get(
+                    $addend->getVAT()->getCountryCode(),
+                    VATRate::COMBINED,
+                    "",
+                );
 
                 continue;
             }
@@ -82,7 +83,7 @@ class PriceCalc
             // Two combined VATs. Merging their nested prices.
             if ($subAddend->getVAT()->is($addend->getVAT())) {
                 foreach ($subAddend->getNestedPrices() as $category => $price) {
-                    $addend->setNestedPrice($category, $price);
+                    $addend->setNestedPrice("$category", $price);
                 }
 
                 continue;
@@ -159,16 +160,19 @@ class PriceCalc
             if ($subtrahend->getVAT()->isAny()) {
                 $success = false;
 
-                foreach ($subtrahend->getNestedPrices() as $category => $price) {
+                foreach ($minuend->getNestedPrices() as $category => $price) {
                     try {
-                        $minuend->getNestedPrice($category)->subtract($subtrahend);
+                        $currentValue = $minuend->getNestedPrice("$category")->getValue();
+
+                        $minuend->getNestedPrice("$category")->subtract($subtrahend);
 
                         $success = true;
                     } catch (ValueError) {
                         //  The subtrahend is bigger, but that is not a problem for now. We reset the minuend
                         // and subtract the subtrahend by the minuend's value, and then we continue again.
-                        $subtrahend->getNumericalValue()->subtract($price->getNumericalValue());
-                        $minuend->getNestedPrice($category)->multiply(0);
+                        $subtrahend->getNumericalValue()
+                            ->subtract($currentValue ?? 0, $minuend->getUnit()->getMinorUnitRate());
+                        $minuend->getNestedPrice("$category")->multiply(0);
                     }
                 }
 
@@ -183,15 +187,20 @@ class PriceCalc
                 continue;
             }
 
-            // Subtrahend has a different VAT rate.
-            if ($minuend->getNestedPrice($subtrahend->getVAT()->getCategory() ?? "") === null) {
-                // @phpcs:ignore
-                throw new ValueError("Subtracting from nothing! Cannot subtract from a price that does not have a price with the same VAT rate.");
+            foreach ($minuend->getNestedPrices() as $category => $price) {
+                if (!$price->getVAT()->is($subtrahend->getVAT())) {
+                    continue;
+                }
+
+                $minuend->getNestedPrice("$category")->subtract($subtrahend);
+                $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
+
+                continue 2;
             }
 
-            // Minuend has combined VAT while the subtrahend has a specific one. We subtract only the correct price.
-            $minuend->getNestedPrice($subtrahend->getVAT()->getCategory() ?? "")->subtract($subtrahend);
-            $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
+            // Subtrahend has a different VAT rate.
+            // @phpcs:ignore
+            throw new ValueError("Subtracting from nothing! Cannot subtract from a price that does not have a price with the same VAT rate.");
         }
 
         return $minuend;

@@ -35,21 +35,6 @@ class VATResolver implements Resolver, Convertor
         }
 
         return VAT::get($countryCode, self::getVATs()[$countryCode][$category], $category);
-
-//        return match ($category) {
-//            "123"   => VAT::get($countryCode),
-//            "456"   => VAT::get($countryCode, VATRate::NONE),
-//            default => VAT::get($countryCode, VATRate::SECOND_REDUCED),
-//        };
-        /**
-         * 10 11.5
-         * 15 17.25
-         * 20 22
-         * 25 27.5
-         * 30 30
-         *
-         * 25 27.5
-         */
     }
 
     public static function getPercentageOf(VAT $vat, ?DateTime $time = null): float|int
