@@ -181,13 +181,13 @@ class PriceCalc
             }
 
             // Subtrahend has a different VAT rate.
-            if ($minuend->getNestedPrice($subtrahend->getVAT()->getCategory()) === null) {
+            if ($minuend->getNestedPrice($subtrahend->getVAT()->getCategory() ?? "") === null) {
                 // @phpcs:ignore
                 throw new ValueError("Subtracting from nothing! Cannot subtract from a price that does not have a price with the same VAT rate.");
             }
 
             // Minuend has combined VAT while the subtrahend has a specific one. We subtract only the correct price.
-            $minuend->getNestedPrice($subtrahend->getVAT()->getCategory())->subtract($subtrahend);
+            $minuend->getNestedPrice($subtrahend->getVAT()->getCategory() ?? "")->subtract($subtrahend);
             $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
         }
 

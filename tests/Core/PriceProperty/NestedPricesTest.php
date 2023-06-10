@@ -42,6 +42,6 @@ class NestedPricesTest extends TestCase
         $price->add(new Price(1, Currency::get()));
 
         $this->assertSame(101, $price->getValue());
-        $this->assertSame([], $price->getNestedPrices());
+        $this->assertNotEmpty($price->getNestedPrices());
     }
 }

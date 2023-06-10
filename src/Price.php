@@ -16,7 +16,6 @@ use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\Resolvers\ProxyResolver;
 use MiBo\VAT\VAT;
 use ValueError;
-use function PHPStan\dumpType;
 
 /**
  * Class Price

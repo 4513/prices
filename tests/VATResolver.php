@@ -25,34 +25,69 @@ class VATResolver implements Resolver, Convertor
 {
     public static function convertForCountry(VAT $vat, string $countryCode): VAT
     {
-        return self::retrieveByCategory($vat->getCategory(), $countryCode);
+        return self::retrieveByCategory($vat->getCategory() ?? "", $countryCode);
     }
 
     public static function retrieveByCategory(string $category, string $countryCode): VAT
     {
-        switch ($category) {
-            case "123":
-            return VAT::get($countryCode);
-
-            case "456":
-            return VAT::get($countryCode, VATRate::NONE);
-
-            default:
-            return VAT::get($countryCode, VATRate::SECOND_REDUCED);
+        if (empty(self::getVATs()[$countryCode][$category])) {
+            return VAT::get($countryCode, VATRate::STANDARD);
         }
+
+        return VAT::get($countryCode, self::getVATs()[$countryCode][$category]);
+
+//        return match ($category) {
+//            "123"   => VAT::get($countryCode),
+//            "456"   => VAT::get($countryCode, VATRate::NONE),
+//            default => VAT::get($countryCode, VATRate::SECOND_REDUCED),
+//        };
     }
 
     public static function getPercentageOf(VAT $vat, ?DateTime $time = null): float|int
     {
-        switch ($vat->getRate()->name) {
-            case VATRate::STANDARD->name:
-            return 0.21;
+        return self::getPercentages()[$vat->getCountryCode()][$vat->getRate()->name];
+    }
 
-            case VATRate::NONE->name:
-            return 0;
+    /**
+     * @return array<string, array<string, \MiBo\VAT\Enums\VATRate>>
+     */
+    private static function getVATs(): array
+    {
+        return [
+            "CZE" => [
+                "9705 00 00" => VATRate::REDUCED,
+                "9704 00 00" => VATRate::REDUCED,
+                "2201"       => VATRate::SECOND_REDUCED,
+                "06"         => VATRate::NONE,
+                "07"         => VATRate::NONE,
+                "08"         => VATRate::NONE,
+                "09"         => VATRate::NONE,
+                "10"         => VATRate::NONE,
+            ],
+            "SVK" => [
+                "07" => VATRate::REDUCED,
+                "08" => VATRate::REDUCED,
+            ],
+        ];
+    }
 
-            default:
-            return 0.15;
-        }
+    /**
+     * @return array<string, array<value-of<\MiBo\VAT\Enums\VATRate>, float>>
+     */
+    private static function getPercentages(): array
+    {
+        return [
+            "CZE" => [
+                VATRate::STANDARD->name       => 0.21,
+                VATRate::SECOND_REDUCED->name => 0.10,
+                VATRate::REDUCED->name        => 0.15,
+                VATRate::NONE->name           => 0,
+            ],
+            "SVK" => [
+                VATRate::STANDARD->name => 0.20,
+                VATRate::REDUCED->name => 0.10,
+                VATRate::NONE->name    => 0,
+            ]
+        ];
     }
 }

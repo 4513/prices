@@ -77,7 +77,7 @@ class VATRelatedTest extends TestCase
 
         $price->forCountry("SVK");
 
-        $this->assertSame(115.0, $price->getValueWithVAT());
+        $this->assertSame(120.0, $price->getValueWithVAT());
     }
 
     /**
