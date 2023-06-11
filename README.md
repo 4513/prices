@@ -1,6 +1,6 @@
 # Prices
 
-[![codecov](https://codecov.io/gh/4513/prices/branch/master/graph/badge.svg?token=W9CCYIORFN)](https://codecov.io/gh/4513/prices)
+[![codecov](https://codecov.io/gh/4513/prices/branch/main/graph/badge.svg?token=lbatKMmLir)](https://codecov.io/gh/4513/prices)
 
 The library serves a Price class that can be used to represent a price in an object that can be sold or has
 its value.
