@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Tests;
 
+use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Price;
 use MiBo\Prices\Units\Price\Currency;
 use MiBo\Properties\Calculators\UnitConvertor;
@@ -27,6 +28,18 @@ use PHPUnit\Framework\TestCase;
  */
 class MainTest extends TestCase
 {
+    /**
+     * @small
+     *
+     * @coversNothing
+     *
+     * @return void
+     */
+    public function testSomething(): void
+    {
+        $this->assertTrue(true);
+    }
+
     /**
      * @small
      *
@@ -96,7 +109,37 @@ class MainTest extends TestCase
     /**
      * @small
      *
-     * @covers ::subtract
+     * @covers ::add
+     *
+     * @return void
+     */
+    public function testAnyRateSubtraction(): void
+    {
+        $prices = [
+            new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE")),
+            new Price(15, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9704 00 00", "CZE")),
+            new Price(20, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")),
+            new Price(25, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")),
+            new Price(30, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")),
+        ];
+
+        $price = clone $prices[0];
+
+        foreach ($prices as $p) {
+            $price->add($p);
+        }
+
+        $discount = new Price($price->getValue(), Currency::get("CZK"), VAT::get("CZE", VATRate::ANY));
+
+        $price->subtract($discount);
+
+        $this->assertSame(0, $price->getValue());
+    }
+
+    /**
+     * @small
+     *
+     * @covers ::add
      *
      * @return void
      */
@@ -129,10 +172,15 @@ class MainTest extends TestCase
             $price->add($p);
         }
 
+        $this->assertSame(100, $price->getValue());
+
         $newPrice = clone $price;
 
         foreach ($prices as $p) {
+            $currentPrice = $newPrice->getValue();
+
             $newPrice->subtract($p);
+            $this->assertSame($currentPrice - $p->getValue(), $newPrice->getValue());
         }
 
         $this->assertSame(0, $newPrice->getValue());
@@ -147,31 +195,21 @@ class MainTest extends TestCase
     /**
      * @small
      *
-     * @covers ::subtract
+     * @covers ::add
      *
      * @return void
      */
-    public function testAnyRateSubtraction(): void
+    public function testAddingForeignPrice(): void
     {
-        $prices = [
-            new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE")),
-            new Price(15, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9704 00 00", "CZE")),
-            new Price(20, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")),
-            new Price(25, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")),
-            new Price(30, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")),
-        ];
+        $priceCZK = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $priceEUR = new Price(10, Currency::get("EUR"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
 
-        $price = clone $prices[0];
+        [
+            $price,
+            $vat,
+        ] = PriceCalc::add($priceCZK, $priceEUR);
 
-        foreach ($prices as $p) {
-            $price->add($p);
-        }
-
-        $discount = new Price($price->getValue(), Currency::get("CZK"), VAT::get("CZE", VATRate::ANY));
-
-        $price->subtract($discount);
-
-        $this->assertSame(0, $price->getValue());
+        $this->assertSame(260, $price);
     }
 
     /**

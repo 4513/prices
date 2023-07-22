@@ -8,7 +8,6 @@ use MiBo\Prices\Contracts\PriceInterface;
 use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\Resolvers\ProxyResolver;
 use MiBo\VAT\VAT;
-use ValueError;
 
 /**
  * Class PriceCalc
@@ -36,7 +35,9 @@ class PriceCalc
             return 0;
         }
 
-        return $price->getValue() * ProxyResolver::getPercentageOf($price->getVAT());
+        return $price->getNumericalValue()->getValue(
+            $price->getUnit()->getMinorUnitRate() ?? 0
+        ) * ProxyResolver::getPercentageOf($price->getVAT());
     }
 
     /**
@@ -45,7 +46,7 @@ class PriceCalc
      * @param \MiBo\Prices\Contracts\PriceInterface $addend The first price to add.
      * @param \MiBo\Prices\Contracts\PriceInterface ...$addends The rest of the prices to add.
      *
-     * @return array{0: \MiBo\Prices\Contracts\PriceInterface, 1: \MiBo\VAT\VAT}
+     * @return array{0: float, 1: \MiBo\VAT\VAT}
      */
     public static function add(PriceInterface $addend, PriceInterface ...$addends): array
     {
@@ -58,153 +59,35 @@ class PriceCalc
                 $subAddend->convertToUnit($addend->getUnit());
             }
 
-            // Addend has combined VAT. Using it instead of the current one.
-            if ($subAddend->getVAT()->isCombined() && !$combined) {
-                foreach ($subAddend->getNestedPrices() as $price) {
-                    $addend->add($price);
-                }
-
-                $vat = VAT::get(
-                    $addend->getVAT()->getCountryCode(),
-                    VATRate::COMBINED,
-                    "",
-                );
-
-                continue;
-            }
-
-            // Addend has the same VAT. We can add these two prices together.
-            if ($subAddend->getVAT()->is($addend->getVAT()) && !$combined) {
+            // The main addend has the same VAT as the sub addend.
+            if ($vat->is($subAddend->getVAT()) && !$combined) {
                 $addend->getNumericalValue()->add($subAddend->getNumericalValue());
 
                 continue;
             }
 
-            // Two combined VATs. Merging their nested prices.
-            if ($subAddend->getVAT()->is($addend->getVAT())) {
-                foreach ($subAddend->getNestedPrices() as $category => $price) {
-                    $addend->setNestedPrice("$category", $price);
-                }
+            // Adding two different VAT rates together, however none of them is combined.
+            if (!$combined && $subAddend->getVAT()->isNotCombined()) {
+                $addend->getNumericalValue()->add($subAddend->getNumericalValue());
+
+                $combined = true;
+                $vat      = VAT::get(
+                    $addend->getVAT()->getCountryCode(),
+                    VATRate::COMBINED
+                );
 
                 continue;
             }
 
-            // Addend has a different VAT rate. Transforming VAT rate into Combined.
-            if ($addend->getVAT()->isNotCombined()) {
-                $newAddend = clone $addend;
-
-                $addend->getNumericalValue()->multiply(0);
+            // Adding a specific VAT rate to a combined one.
+            if ($combined && $subAddend->getVAT()->isNotCombined()) {
+                $addend->getNumericalValue()->add($subAddend->getNumericalValue());
             }
-
-            $addend->setNestedPrice($subAddend->getVAT()->getCategory() ?? "", clone $subAddend);
-
-            if ($addend->getVAT()->isCombined()) {
-                continue;
-            }
-
-            $addend->setNestedPrice($addend->getVAT()->getCategory() ?? "", $newAddend ?? clone $addend);
-
-            $vat = VAT::get(
-                $addend->getVAT()->getCountryCode(),
-                VATRate::COMBINED,
-                "",
-            );
         }
 
         return [
-            $addend,
+            $addend->getNumericalValue()->getValue($addend->getUnit()->getMinorUnitRate() ?? 0),
             $vat,
         ];
-    }
-
-    /**
-     * Subtracts multiple prices from the minuend.
-     *
-     * @param \MiBo\Prices\Contracts\PriceInterface $minuend The price to subtract from.
-     * @param \MiBo\Prices\Contracts\PriceInterface ...$subtrahends The rest of the prices to subtract.
-     *
-     * @return \MiBo\Prices\Contracts\PriceInterface
-     */
-    public static function subtract(PriceInterface $minuend, PriceInterface ...$subtrahends): PriceInterface
-    {
-        $vat      = $minuend->getVAT();
-        $combined = $vat->isCombined();
-
-        foreach ($subtrahends as $subtrahend) {
-            // Converting the Price into same currency.
-            if (!$subtrahend->getUnit()->is($minuend->getUnit())) {
-                $subtrahend->convertToUnit($minuend->getUnit());
-            }
-
-            // Subtrahend has the same VAT or 'any' VAT, thus we can subtract it directly.
-            if (!$combined && ($vat->is($subtrahend->getVAT()) || $subtrahend->getVAT()->isAny())) {
-                $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
-
-                // Subtrahend is bigger and so we cannot continue.
-                if ($minuend->getValue() < 0) {
-                    // @phpcs:ignore
-                    throw new ValueError("Subtracting too much! Cannot subtract a price that is higher than the minuend.");
-                }
-
-                continue;
-            }
-
-            // Subtrahend has combined VAT. We can loop all of its prices and subtract them one by one.
-            if ($combined && $subtrahend->getVAT()->isCombined()) {
-                $minuend = self::subtract($minuend, ...$subtrahend->getNestedPrices());
-
-                continue;
-            }
-
-            // Subtrahend has any VAT. We loop its prices and try to subtract from all possible prices.
-            if ($subtrahend->getVAT()->isAny()) {
-                $success = false;
-
-                foreach ($minuend->getNestedPrices() as $category => $price) {
-                    try {
-                        $currentValue = $minuend->getNestedPrice("$category")?->getValue();
-
-                        $minuend->getNestedPrice("$category")?->subtract($subtrahend);
-
-                        $success = true;
-                    } catch (ValueError) {
-                        //  The subtrahend is bigger, but that is not a problem for now. We reset the minuend
-                        // and subtract the subtrahend by the minuend's value, and then we continue again.
-                        $subtrahend->getNumericalValue()
-                            ->subtract($currentValue ?? 0, $minuend->getUnit()->getMinorUnitRate());
-                        $minuend->getNestedPrice("$category")->multiply(0);
-                        $minuend->getNumericalValue()
-                            ->subtract($currentValue ?? 0, $minuend->getUnit()->getMinorUnitRate());
-                    }
-                }
-
-                // The subtrahend has been bigger.
-                if (!$success) {
-                    // @phpcs:ignore
-                    throw new ValueError("Subtracting too much! Cannot subtract a price that is higher than the minuend.");
-                }
-
-                $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
-
-                continue;
-            }
-
-            foreach ($minuend->getNestedPrices() as $category => $price) {
-                if (!$price->getVAT()->is($subtrahend->getVAT())) {
-                    continue;
-                }
-
-                $minuend->getNestedPrice("$category")?->subtract($subtrahend);
-                $minuend->getNumericalValue()->subtract($subtrahend->getNumericalValue());
-
-                continue 2;
-            }
-
-            // Subtrahend has a different VAT rate.
-            // @phpcs:ignore
-            throw new ValueError("Subtracting from nothing! Cannot subtract from a price that does not have a price with the same VAT rate.");
-        }
-
-        return $minuend;
     }
 }

@@ -39,6 +39,10 @@ class Price extends NumericalProperty implements PriceInterface
 
     protected ?DateTime $time;
 
+    private Value $initialValue;
+
+    private VAT $initialVAT;
+
     /**
      * @param float|\MiBo\Properties\Value|int $value
      * @param \MiBo\Prices\Units\Price\Currency $unit
@@ -55,6 +59,11 @@ class Price extends NumericalProperty implements PriceInterface
             new Value($value, $unit->getMinorUnitRate() ?? 0, 0);
 
         parent::__construct($value, $unit);
+
+        $this->initialValue = (clone $this->getNumericalValue())->multiply(0);
+        $this->initialVAT   = clone $this->getVAT();
+
+        $this->prices[$this->getVAT()->getCategory() ?? ""] = clone $this;
     }
 
     /**
@@ -64,12 +73,12 @@ class Price extends NumericalProperty implements PriceInterface
     {
         // Adding incompatible types.
         if ($value instanceof ContractNumericalProperty && !$value instanceof Price) {
-            throw new ValueError();
+            throw new ValueError("Cannot add incompatible types together.");
         }
 
         // Adding float or int with no VAT specified is forbidden when having combined VAT.
         if (!$value instanceof Price && $this->getVAT()->isCombined()) {
-            throw new ValueError();
+            throw new ValueError("Cannot add a float or an integer to a combined VAT price! Specify VAT category.");
         }
 
         // Transforming float and int into Price.
@@ -77,35 +86,60 @@ class Price extends NumericalProperty implements PriceInterface
             $value = new self($value, $this->unit, $this->vat, $this->time);
         }
 
-        [
-            $copy,
-            $vat,
-        ] = PriceCalc::add($this, $value);
+        if ($value->getVAT()->isCombined()) {
+            $value->convertToUnit($this->getUnit());
 
-        $this->vat = $vat;
+            foreach ($value->getNestedPrices() as $nestedPrice) {
+                $this->add($nestedPrice);
+            }
+
+            return $this;
+        }
+
+        $value->convertToUnit($this->getUnit());
+        $this->setNestedPrice($value->getVAT()->getCategory() ?? "", $value);
 
         return $this;
     }
 
     /**
      * @inheritDoc
-     *
-     * @param int|float|\MiBo\Prices\Price $value
      */
     public function subtract(ContractNumericalProperty|float|int $value): static
     {
         // Adding float or int with no VAT specified is forbidden when having combined VAT.
         if (!$value instanceof Price && $this->getVAT()->isCombined()) {
-            throw new ValueError();
+            throw new ValueError(
+                "Cannot subtract a float or an integer from a combined VAT price! Specify VAT category."
+            );
+        }
+
+        if (!$value instanceof Price && $value instanceof ContractNumericalProperty) {
+            throw new ValueError("Cannot subtract incompatible types together.");
         }
 
         if (!$value instanceof Price) {
             $value = new self($value, $this->unit, $this->vat, $this->time);
         }
 
-        PriceCalc::subtract($this, $value);
+        $value = (clone $value)->multiply(-1);
 
-        return $this;
+        $value->getValue();
+
+        return $this->add($value);
+    }
+
+    protected function compute(): void
+    {
+        $this->getNumericalValue()->multiply(0)->add($this->initialValue);
+        $this->vat = $this->initialVAT;
+
+        [
+            $copy,
+            $vat,
+        ] = PriceCalc::add($this, ...array_values($this->prices));
+
+        $this->vat = $vat;
     }
 
     /**
@@ -121,6 +155,8 @@ class Price extends NumericalProperty implements PriceInterface
      */
     public function getValue(): int|float
     {
+        $this->compute();
+
         return $this->getNumericalValue()->getValue($this->unit->getMinorUnitRate() ?? 0);
     }
 
@@ -146,13 +182,8 @@ class Price extends NumericalProperty implements PriceInterface
     public function getValueWithVAT(): int|float
     {
         $withoutVAT = $this->getValue();
-        $vat        = $this->getValueOfVAT();
 
-        if ($withoutVAT === 0 && ($vat === 0 || $vat === 0.0)) {
-            return 0;
-        }
-
-        return $this->getValue() + $this->getValueOfVAT();
+        return $withoutVAT === 0 ? 0 : $withoutVAT + $this->getValueOfVAT();
     }
 
     /**
@@ -166,10 +197,6 @@ class Price extends NumericalProperty implements PriceInterface
             $value += PriceCalc::getValueOfVAT($price);
         }
 
-        if ($this->getVAT()->isNotCombined()) {
-            $value += PriceCalc::getValueOfVAT($this);
-        }
-
         return $value;
     }
 
@@ -179,6 +206,10 @@ class Price extends NumericalProperty implements PriceInterface
     public function forCountry(string $countryCode): static
     {
         $this->vat = ProxyResolver::retrieveByCategory($this->vat->getCategory() ?? "", $countryCode);
+
+        foreach ($this->prices as $price) {
+            $price->forCountry($countryCode);
+        }
 
         return $this;
     }
