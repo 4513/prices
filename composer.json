@@ -1,22 +1,24 @@
 {
     "name": "mibo/prices",
     "type": "library",
-    "description": "PHP Library for generic and/or custom properties",
+    "description": "PHP lib for prices",
     "keywords": [
         "PHP",
         "Properties",
         "Property",
-        "ISO",
-        "Units",
+        "Prices",
+        "Price",
         "Calculation",
         "Math",
         "Mathematics",
         "Mathematical",
-        "Prices",
-        "Price",
         "Currencies",
         "Currency",
-        "Value"
+        "Value",
+        "VAT",
+        "Tax",
+        "Exchange",
+        "Exchanging"
     ],
     "authors": [
         {
