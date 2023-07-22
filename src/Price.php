@@ -87,6 +87,7 @@ class Price extends NumericalProperty implements PriceInterface
         }
 
         if ($value->getVAT()->isCombined()) {
+            $value->convertToUnit($this->getUnit());
             foreach ($value->getNestedPrices()['+'] as $nestedPrice) {
                 $this->add($nestedPrice);
             }
@@ -98,6 +99,7 @@ class Price extends NumericalProperty implements PriceInterface
             return $this;
         }
 
+        $value->convertToUnit($this->getUnit());
         $this->setNestedPrice($value->getVAT()->getCategory() ?? "", $value);
 
         return $this;
@@ -119,7 +121,19 @@ class Price extends NumericalProperty implements PriceInterface
             $value = new self($value, $this->unit, $this->vat, $this->time);
         }
 
-        PriceCalc::subtract($this, $value);
+        if ($value->getVAT()->isCombined()) {
+            foreach ($value->getNestedPrices()['+'] as $nestedPrice) {
+                $this->add($nestedPrice->multiply(-1));
+            }
+
+            foreach ($value->getNestedPrices()['-'] as $nestedPrice) {
+                $this->add($nestedPrice);
+            }
+
+            return $this;
+        }
+
+        $this->setNestedPrice($value->getVAT()->getCategory() ?? "", $value->multiply(-1));
 
         return $this;
     }

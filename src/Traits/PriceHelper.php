@@ -46,7 +46,7 @@ trait PriceHelper
             return;
         }
 
-        $this->prices['+'][$category]->add($price);
+        $this->prices['+'][$category]->getNumericalValue()->add($price->getNumericalValue());
     }
 
     /**

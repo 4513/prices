@@ -33,12 +33,115 @@ class PriceSubtractionTest extends TestCase
      *
      * @return void
      */
-    public function test(): void
+    public function testAddingCombinedOnCombined(): void
+    {
+        $price = new Price(100, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+
+        $this->assertSame(80, $price->getValue());
+
+        $price = (new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")))
+            ->subtract($price);
+        $price->subtract(clone $price);
+
+        $this->assertSame(0, $price->getValue());
+        $this->assertTrue($price->getVAT()->getRate()->isCombined());
+    }
+
+    /**
+     * @small
+     *
+     * @covers ::subtract
+     * @covers ::compute
+     *
+     * @return void
+     */
+    public function testSubtractingCombined(): void
+    {
+        $price = new Price(100, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+
+        $this->assertSame(80, $price->getValue());
+
+        $price = (new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")))
+            ->subtract($price);
+
+        $this->assertSame(-70, $price->getValue());
+        $this->assertTrue($price->getVAT()->getRate()->isCombined());
+    }
+
+    /**
+     * @small
+     *
+     * @covers ::subtract
+     * @covers ::compute
+     *
+     * @return void
+     */
+    public function testSubtractingOnCombined(): void
+    {
+        $price = new Price(100, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+
+        $this->assertSame(80, $price->getValue());
+        $this->assertSame(15.0, $price->getValueOfVAT());
+
+        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")));
+
+        $this->assertSame(70, $price->getValue());
+        $this->assertTrue($price->getVAT()->getRate()->isCombined());
+        $this->assertSame(14.0, $price->getValueOfVAT());
+    }
+
+    /**
+     * @small
+     *
+     * @covers ::subtract
+     * @covers ::compute
+     *
+     * @return void
+     */
+    public function testSubtractingDifferentVAT(): void
+    {
+        $price = new Price(100, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+
+        $this->assertSame(100, $price->getValue());
+        $this->assertSame(100, $price->getNumericalValue()->getValue(2));
+        $this->assertSame(15.0, $price->getValueOfVAT());
+
+        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+
+        $this->assertSame(90, $price->getValue());
+        $this->assertSame(90, $price->getValue());
+        $this->assertSame(90, $price->getNumericalValue()->getValue(2));
+
+        $this->assertTrue($price->getVAT()->getRate()->isCombined());
+        $this->assertSame(15.0, $price->getValueOfVAT());
+    }
+
+    /**
+     * @small
+     *
+     * @covers ::subtract
+     * @covers ::compute
+     *
+     * @return void
+     */
+    public function testSubtractingSameVAT(): void
     {
         $price = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
 
         $this->assertSame(10, $price->getValue());
         $this->assertSame(10, $price->getNumericalValue()->getValue(2));
+
+        $price->subtract(new Price(5, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE")));
+
+        $this->assertSame(5, $price->getValue());
+        $this->assertSame(5, $price->getNumericalValue()->getValue(2));
+        $this->assertSame(5 * 0.15, $price->getValueOfVAT());
     }
 
     /**
