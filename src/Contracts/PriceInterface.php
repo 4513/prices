@@ -66,7 +66,7 @@ interface PriceInterface extends NumericalProperty
     /**
      * All nested prices.
      *
-     * @return array<string, \MiBo\Prices\Contracts\PriceInterface>
+     * @return array<string, array<string, \MiBo\Prices\Contracts\PriceInterface>>
      */
     public function getNestedPrices(): array;
 

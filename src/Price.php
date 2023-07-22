@@ -88,6 +88,7 @@ class Price extends NumericalProperty implements PriceInterface
 
         if ($value->getVAT()->isCombined()) {
             $value->convertToUnit($this->getUnit());
+
             foreach ($value->getNestedPrices()['+'] as $nestedPrice) {
                 $this->add($nestedPrice);
             }
@@ -107,13 +108,15 @@ class Price extends NumericalProperty implements PriceInterface
 
     /**
      * @inheritDoc
-     *
-     * @param int|float|\MiBo\Prices\Price $value
      */
     public function subtract(ContractNumericalProperty|float|int $value): static
     {
         // Adding float or int with no VAT specified is forbidden when having combined VAT.
         if (!$value instanceof Price && $this->getVAT()->isCombined()) {
+            throw new ValueError();
+        }
+
+        if (!$value instanceof Price && $value instanceof ContractNumericalProperty) {
             throw new ValueError();
         }
 
