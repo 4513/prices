@@ -63,7 +63,7 @@ class Price extends NumericalProperty implements PriceInterface
         $this->initialValue = (clone $this->getNumericalValue())->multiply(0);
         $this->initialVAT   = clone $this->getVAT();
 
-        $this->prices['+'][$this->getVAT()->getCategory() ?? ""] = clone $this;
+        $this->prices[$this->getVAT()->getCategory() ?? ""] = clone $this;
     }
 
     /**
@@ -89,12 +89,8 @@ class Price extends NumericalProperty implements PriceInterface
         if ($value->getVAT()->isCombined()) {
             $value->convertToUnit($this->getUnit());
 
-            foreach ($value->getNestedPrices()['+'] as $nestedPrice) {
+            foreach ($value->getNestedPrices() as $nestedPrice) {
                 $this->add($nestedPrice);
-            }
-
-            foreach ($value->getNestedPrices()['-'] as $nestedPrice) {
-                $this->add($nestedPrice->multiply(-1));
             }
 
             return $this;
@@ -139,7 +135,7 @@ class Price extends NumericalProperty implements PriceInterface
         [
             $copy,
             $vat,
-        ] = PriceCalc::add($this, ...array_values($this->prices['+']));
+        ] = PriceCalc::add($this, ...array_values($this->prices));
 
         $this->vat = $vat;
     }
@@ -195,12 +191,8 @@ class Price extends NumericalProperty implements PriceInterface
     {
         $value = 0;
 
-        foreach ($this->prices['+'] as $price) {
+        foreach ($this->prices as $price) {
             $value += PriceCalc::getValueOfVAT($price);
-        }
-
-        foreach ($this->prices['-'] as $price) {
-            $value -= PriceCalc::getValueOfVAT($price);
         }
 
         return $value;
@@ -213,14 +205,20 @@ class Price extends NumericalProperty implements PriceInterface
     {
         $this->vat = ProxyResolver::retrieveByCategory($this->vat->getCategory() ?? "", $countryCode);
 
-        foreach ($this->prices['+'] as $price) {
-            $price->forCountry($countryCode);
-        }
-
-        foreach ($this->prices['-'] as $price) {
+        foreach ($this->prices as $price) {
             $price->forCountry($countryCode);
         }
 
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function __clone(): void
+    {
+        parent::__clone();
+
+        $this->prices = array_map(fn (PriceInterface $price) => clone $price, $this->prices);
     }
 }
