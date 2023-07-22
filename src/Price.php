@@ -109,7 +109,9 @@ class Price extends NumericalProperty implements PriceInterface
     {
         // Adding float or int with no VAT specified is forbidden when having combined VAT.
         if (!$value instanceof Price && $this->getVAT()->isCombined()) {
-            throw new ValueError("Cannot subtract a float or an integer from a combined VAT price! Specify VAT category.");
+            throw new ValueError(
+                "Cannot subtract a float or an integer from a combined VAT price! Specify VAT category."
+            );
         }
 
         if (!$value instanceof Price && $value instanceof ContractNumericalProperty) {
