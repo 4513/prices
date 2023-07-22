@@ -33,7 +33,7 @@ class PriceSubtractionTest extends TestCase
      *
      * @return void
      */
-    public function testAddingCombinedOnCombined(): void
+    public function testSubtractingCombinedOnCombined(): void
     {
         $price = new Price(100, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
         $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
@@ -43,8 +43,10 @@ class PriceSubtractionTest extends TestCase
 
         $price = (new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")))
             ->subtract($price);
+
         $price->subtract(clone $price);
 
+        $price->getValue();
         $this->assertSame(0, $price->getValue());
         $this->assertTrue($price->getVAT()->getRate()->isCombined());
     }

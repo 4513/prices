@@ -8,7 +8,6 @@ use MiBo\Prices\Contracts\PriceInterface;
 use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\Resolvers\ProxyResolver;
 use MiBo\VAT\VAT;
-use ValueError;
 
 /**
  * Class PriceCalc
@@ -47,7 +46,7 @@ class PriceCalc
      * @param \MiBo\Prices\Contracts\PriceInterface $addend The first price to add.
      * @param \MiBo\Prices\Contracts\PriceInterface ...$addends The rest of the prices to add.
      *
-     * @return array{0: \MiBo\Prices\Contracts\PriceInterface, 1: \MiBo\VAT\VAT}
+     * @return array{0: float, 1: \MiBo\VAT\VAT}
      */
     public static function add(PriceInterface $addend, PriceInterface ...$addends): array
     {
@@ -87,7 +86,7 @@ class PriceCalc
         }
 
         return [
-            $addend,
+            $addend->getNumericalValue()->getValue($addend->getUnit()->getMinorUnitRate() ?? 0),
             $vat,
         ];
     }

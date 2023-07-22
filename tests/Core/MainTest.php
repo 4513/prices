@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Tests;
 
+use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Price;
 use MiBo\Prices\Units\Price\Currency;
 use MiBo\Properties\Calculators\UnitConvertor;
@@ -108,7 +109,7 @@ class MainTest extends TestCase
     /**
      * @small
      *
-     * @covers ::subtract
+     * @covers ::add
      *
      * @return void
      */
@@ -133,6 +134,82 @@ class MainTest extends TestCase
         $price->subtract($discount);
 
         $this->assertSame(0, $price->getValue());
+    }
+
+    /**
+     * @small
+     *
+     * @covers ::add
+     *
+     * @return void
+     */
+    public function testSubtraction(): void
+    {
+        $price = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE")));
+
+        $this->assertSame(0, $price->getValue());
+        $this->assertSame(0, $price->getValueWithVAT());
+
+        $price2 = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $price2->subtract($price);
+
+        $this->assertSame(10, $price2->getValue());
+        $this->assertSame(11.5, $price2->getValueWithVAT());
+
+        $prices = [
+            new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE")),
+            new Price(15, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9704 00 00", "CZE")),
+            new Price(20, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")),
+            new Price(25, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")),
+            new Price(30, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")),
+        ];
+
+        $price = clone $prices[0];
+        $price->multiply(0);
+
+        foreach ($prices as $p) {
+            $price->add($p);
+        }
+
+        $this->assertSame(100, $price->getValue());
+
+        $newPrice = clone $price;
+
+        foreach ($prices as $p) {
+            $currentPrice = $newPrice->getValue();
+
+            $newPrice->subtract($p);
+            $this->assertSame($currentPrice - $p->getValue(), $newPrice->getValue());
+        }
+
+        $this->assertSame(0, $newPrice->getValue());
+
+        $newPrice = clone $price;
+
+        $newPrice->subtract($price);
+
+        $this->assertSame(0, $newPrice->getValue());
+    }
+
+    /**
+     * @small
+     *
+     * @covers ::add
+     *
+     * @return void
+     */
+    public function testAddingForeignPrice(): void
+    {
+        $priceCZK = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $priceEUR = new Price(10, Currency::get("EUR"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+
+        [
+            $price,
+            $vat,
+        ] = PriceCalc::add($priceCZK, $priceEUR);
+
+        $this->assertSame(260, $price);
     }
 
     /**

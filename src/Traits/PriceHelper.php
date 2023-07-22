@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MiBo\Prices\Traits;
 
 use MiBo\Prices\Contracts\PriceInterface;
+use MiBo\Properties\Contracts\NumericalProperty;
 use MiBo\Properties\Value;
 
 /**
@@ -47,6 +48,46 @@ trait PriceHelper
         }
 
         $this->prices['+'][$category]->getNumericalValue()->add($price->getNumericalValue());
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function multiply(int|float|NumericalProperty $value): static
+    {
+        parent::multiply($value);
+
+        $this->initialValue->multiply($value);
+
+        foreach ($this->prices['+'] as $price) {
+            $price->multiply($value);
+        }
+
+        foreach ($this->prices['-'] as $price) {
+            $price->multiply($value);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function divide(NumericalProperty|float|int $value): static
+    {
+        parent::divide($value);
+
+        $this->initialValue->divide($value);
+
+        foreach ($this->prices['+'] as $price) {
+            $price->divide($value);
+        }
+
+        foreach ($this->prices['-'] as $price) {
+            $price->divide($value);
+        }
+
+        return $this;
     }
 
     /**
