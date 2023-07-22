@@ -73,12 +73,12 @@ class Price extends NumericalProperty implements PriceInterface
     {
         // Adding incompatible types.
         if ($value instanceof ContractNumericalProperty && !$value instanceof Price) {
-            throw new ValueError();
+            throw new ValueError("Cannot add incompatible types together.");
         }
 
         // Adding float or int with no VAT specified is forbidden when having combined VAT.
         if (!$value instanceof Price && $this->getVAT()->isCombined()) {
-            throw new ValueError();
+            throw new ValueError("Cannot add a float or an integer to a combined VAT price! Specify VAT category.");
         }
 
         // Transforming float and int into Price.
@@ -109,11 +109,11 @@ class Price extends NumericalProperty implements PriceInterface
     {
         // Adding float or int with no VAT specified is forbidden when having combined VAT.
         if (!$value instanceof Price && $this->getVAT()->isCombined()) {
-            throw new ValueError();
+            throw new ValueError("Cannot subtract a float or an integer from a combined VAT price! Specify VAT category.");
         }
 
         if (!$value instanceof Price && $value instanceof ContractNumericalProperty) {
-            throw new ValueError();
+            throw new ValueError("Cannot subtract incompatible types together.");
         }
 
         if (!$value instanceof Price) {

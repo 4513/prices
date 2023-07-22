@@ -7,7 +7,6 @@ namespace MiBo\Prices\Traits;
 use MiBo\Prices\Contracts\PriceInterface;
 use MiBo\Properties\Contracts\NumericalProperty;
 use MiBo\Properties\Value;
-use ValueError;
 
 /**
  * Trait PriceHelper
