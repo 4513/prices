@@ -20,8 +20,11 @@ use MiBo\Properties\Value;
  */
 trait PriceHelper
 {
-    /** @var array<string, \MiBo\Prices\Contracts\PriceInterface> */
-    protected array $prices = [];
+    /** @var array<string, array<string, \MiBo\Prices\Price>> */
+    protected array $prices = [
+        '+' => [],
+        '-' => [],
+    ];
 
     /**
      * @inheritDoc
@@ -37,13 +40,13 @@ trait PriceHelper
     {
         $this->getNumericalValue()->add($price->getNumericalValue());
 
-        if (!isset($this->prices[$category])) {
-            $this->prices[$category] = $price;
+        if (!isset($this->prices['+'][$category])) {
+            $this->prices['+'][$category] = $price;
 
             return;
         }
 
-        $this->prices[$category]->add($price);
+        $this->prices['+'][$category]->add($price);
     }
 
     /**
@@ -51,7 +54,7 @@ trait PriceHelper
      */
     public function getNestedPrice(string $category): ?PriceInterface
     {
-        return $this->prices[$category] ?? null;
+        return $this->prices['+'][$category] ?? null;
     }
 
     /**

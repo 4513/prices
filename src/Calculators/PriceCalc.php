@@ -36,7 +36,9 @@ class PriceCalc
             return 0;
         }
 
-        return $price->getValue() * ProxyResolver::getPercentageOf($price->getVAT());
+        return $price->getNumericalValue()->getValue(
+            $price->getUnit()->getMinorUnitRate() ?? 0
+        ) * ProxyResolver::getPercentageOf($price->getVAT());
     }
 
     /**
@@ -58,57 +60,30 @@ class PriceCalc
                 $subAddend->convertToUnit($addend->getUnit());
             }
 
-            // Addend has combined VAT. Using it instead of the current one.
-            if ($subAddend->getVAT()->isCombined() && !$combined) {
-                foreach ($subAddend->getNestedPrices() as $price) {
-                    $addend->add($price);
-                }
-
-                $vat = VAT::get(
-                    $addend->getVAT()->getCountryCode(),
-                    VATRate::COMBINED,
-                    "",
-                );
-
-                continue;
-            }
-
-            // Addend has the same VAT. We can add these two prices together.
-            if ($subAddend->getVAT()->is($addend->getVAT()) && !$combined) {
+            // The main addend has the same VAT as the sub addend.
+            if ($vat->is($subAddend->getVAT(), true) && !$combined) {
                 $addend->getNumericalValue()->add($subAddend->getNumericalValue());
 
                 continue;
             }
 
-            // Two combined VATs. Merging their nested prices.
-            if ($subAddend->getVAT()->is($addend->getVAT())) {
-                foreach ($subAddend->getNestedPrices() as $category => $price) {
-                    $addend->setNestedPrice("$category", $price);
-                }
+            // Adding two different VAT rates together, however none of them is combined.
+            if (!$combined && $subAddend->getVAT()->isNotCombined()) {
+                $addend->getNumericalValue()->add($subAddend->getNumericalValue());
+
+                $combined = true;
+                $vat      = VAT::get(
+                    $addend->getVAT()->getCountryCode(),
+                    VATRate::COMBINED
+                );
 
                 continue;
             }
 
-            // Addend has a different VAT rate. Transforming VAT rate into Combined.
-            if ($addend->getVAT()->isNotCombined()) {
-                $newAddend = clone $addend;
-
-                $addend->getNumericalValue()->multiply(0);
+            // Adding a specific VAT rate to a combined one.
+            if ($combined && $subAddend->getVAT()->isNotCombined()) {
+                $addend->getNumericalValue()->add($subAddend->getNumericalValue());
             }
-
-            $addend->setNestedPrice($subAddend->getVAT()->getCategory() ?? "", clone $subAddend);
-
-            if ($addend->getVAT()->isCombined()) {
-                continue;
-            }
-
-            $addend->setNestedPrice($addend->getVAT()->getCategory() ?? "", $newAddend ?? clone $addend);
-
-            $vat = VAT::get(
-                $addend->getVAT()->getCountryCode(),
-                VATRate::COMBINED,
-                "",
-            );
         }
 
         return [

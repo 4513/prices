@@ -39,6 +39,10 @@ class Price extends NumericalProperty implements PriceInterface
 
     protected ?DateTime $time;
 
+    private Value $initialValue;
+
+    private VAT $initialVAT;
+
     /**
      * @param float|\MiBo\Properties\Value|int $value
      * @param \MiBo\Prices\Units\Price\Currency $unit
@@ -55,6 +59,11 @@ class Price extends NumericalProperty implements PriceInterface
             new Value($value, $unit->getMinorUnitRate() ?? 0, 0);
 
         parent::__construct($value, $unit);
+
+        $this->initialValue = (clone $this->getNumericalValue())->multiply(0);
+        $this->initialVAT   = clone $this->getVAT();
+
+        $this->prices['+'][$this->getVAT()->getCategory() ?? ""] = clone $this;
     }
 
     /**
@@ -77,12 +86,19 @@ class Price extends NumericalProperty implements PriceInterface
             $value = new self($value, $this->unit, $this->vat, $this->time);
         }
 
-        [
-            $copy,
-            $vat,
-        ] = PriceCalc::add($this, $value);
+        if ($value->getVAT()->isCombined()) {
+            foreach ($value->getNestedPrices()['+'] as $nestedPrice) {
+                $this->add($nestedPrice);
+            }
 
-        $this->vat = $vat;
+            foreach ($value->getNestedPrices()['-'] as $nestedPrice) {
+                $this->subtract($nestedPrice);
+            }
+
+            return $this;
+        }
+
+        $this->setNestedPrice($value->getVAT()->getCategory() ?? "", $value);
 
         return $this;
     }
@@ -108,6 +124,19 @@ class Price extends NumericalProperty implements PriceInterface
         return $this;
     }
 
+    protected function compute(): void
+    {
+        $this->getNumericalValue()->multiply(0)->add($this->initialValue);
+        $this->vat = $this->initialVAT;
+
+        [
+            $copy,
+            $vat,
+        ] = PriceCalc::add($this, ...array_values($this->prices['+']));
+
+        $this->vat = $vat;
+    }
+
     /**
      * @inheritDoc
      */
@@ -121,6 +150,8 @@ class Price extends NumericalProperty implements PriceInterface
      */
     public function getValue(): int|float
     {
+        $this->compute();
+
         return $this->getNumericalValue()->getValue($this->unit->getMinorUnitRate() ?? 0);
     }
 
@@ -146,13 +177,8 @@ class Price extends NumericalProperty implements PriceInterface
     public function getValueWithVAT(): int|float
     {
         $withoutVAT = $this->getValue();
-        $vat        = $this->getValueOfVAT();
 
-        if ($withoutVAT === 0 && ($vat === 0 || $vat === 0.0)) {
-            return 0;
-        }
-
-        return $this->getValue() + $this->getValueOfVAT();
+        return $withoutVAT === 0 ? 0 : $withoutVAT + $this->getValueOfVAT();
     }
 
     /**
@@ -162,12 +188,12 @@ class Price extends NumericalProperty implements PriceInterface
     {
         $value = 0;
 
-        foreach ($this->prices as $price) {
+        foreach ($this->prices['+'] as $price) {
             $value += PriceCalc::getValueOfVAT($price);
         }
 
-        if ($this->getVAT()->isNotCombined()) {
-            $value += PriceCalc::getValueOfVAT($this);
+        foreach ($this->prices['-'] as $price) {
+            $value -= PriceCalc::getValueOfVAT($price);
         }
 
         return $value;
@@ -181,15 +207,5 @@ class Price extends NumericalProperty implements PriceInterface
         $this->vat = ProxyResolver::retrieveByCategory($this->vat->getCategory() ?? "", $countryCode);
 
         return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function __clone(): void
-    {
-        parent::__clone();
-
-        $this->prices = array_map(fn (PriceInterface $price) => clone $price, $this->prices);
     }
 }
