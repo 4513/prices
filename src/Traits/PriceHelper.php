@@ -7,6 +7,7 @@ namespace MiBo\Prices\Traits;
 use MiBo\Prices\Contracts\PriceInterface;
 use MiBo\Properties\Contracts\NumericalProperty;
 use MiBo\Properties\Value;
+use ValueError;
 
 /**
  * Trait PriceHelper
@@ -54,7 +55,7 @@ trait PriceHelper
     {
         parent::multiply($value);
 
-        $this->initialValue->multiply($value);
+        $this->initialValue->multiply($value instanceof NumericalProperty ? $value->getNumericalValue() : $value);
 
         foreach ($this->prices as $price) {
             $price->multiply($value);
@@ -70,7 +71,7 @@ trait PriceHelper
     {
         parent::divide($value);
 
-        $this->initialValue->divide($value);
+        $this->initialValue->divide($value instanceof NumericalProperty ? $value->getNumericalValue() : $value);
 
         foreach ($this->prices as $price) {
             $price->divide($value);

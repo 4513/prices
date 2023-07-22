@@ -60,7 +60,7 @@ class PriceCalc
             }
 
             // The main addend has the same VAT as the sub addend.
-            if ($vat->is($subAddend->getVAT(), true) && !$combined) {
+            if ($vat->is($subAddend->getVAT()) && !$combined) {
                 $addend->getNumericalValue()->add($subAddend->getNumericalValue());
 
                 continue;
