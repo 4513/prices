@@ -59,3 +59,9 @@ to use another class.
 The library does not cover a conversion between currencies, nor VAT rates. If one wants to have that solved,
 check composer suggestions. If empty, the libraries that are focused on that are not yet published, however, they
 are under development and will be available soon.
+
+---
+### Notes
+Please, be aware that comparing prices is complex and should be done with care. Currently, the library does provide
+a way to compare prices, however, that is being marked as deprecated and experimental, even tho, it should work fine.
+One should make sure that the behavior is as expected, because comparing a price with VAT and currency is way too hard.

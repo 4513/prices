@@ -8,6 +8,8 @@ use DateTime;
 use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Contracts\PriceInterface;
 use MiBo\Prices\Traits\PriceHelper;
+use MiBo\Properties\Contracts\ComparableProperty;
+use MiBo\Properties\Contracts\NumericalComparableProperty;
 use MiBo\Properties\Contracts\NumericalProperty as ContractNumericalProperty;
 use MiBo\Properties\Contracts\Unit;
 use MiBo\Properties\NumericalProperty;
@@ -16,6 +18,8 @@ use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\Resolvers\ProxyResolver;
 use MiBo\VAT\VAT;
 use ValueError;
+use function is_float;
+use function is_int;
 
 /**
  * Class Price
@@ -213,6 +217,509 @@ class Price extends NumericalProperty implements PriceInterface
 
         return $this;
     }
+
+    // @codeCoverageIgnoreStart
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isLessThan(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::isLessThan($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotLessThan(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::isNotLessThan($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isLessThanOrEqualTo(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::isLessThanOrEqualTo($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotLessThanOrEqualTo(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::isNotLessThanOrEqualTo($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isGreaterThan(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::isGreaterThan($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotGreaterThan(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::isNotGreaterThan($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isGreaterThanOrEqualTo(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::isGreaterThanOrEqualTo($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotGreaterThanOrEqualTo(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::isNotGreaterThanOrEqualTo($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isEqualTo(float|int|NumericalComparableProperty $property): bool
+    {
+        if ($property instanceof self) {
+            $property->forCountry($this->getVAT()->getCountryCode());
+        }
+
+        return parent::isEqualTo($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotEqualTo(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::isNotEqualTo($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isBetween(
+        float|int|NumericalComparableProperty $first,
+        float|int|NumericalComparableProperty $second
+    ): bool
+    {
+        return parent::isBetween($first, $second);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotBetween(
+        float|int|NumericalComparableProperty $first,
+        float|int|NumericalComparableProperty $second
+    ): bool
+    {
+        return parent::isNotBetween($first, $second);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isBetweenOrEqualTo(
+        float|int|NumericalComparableProperty $first,
+        float|int|NumericalComparableProperty $second
+    ): bool
+    {
+        return parent::isBetweenOrEqualTo($first, $second);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotBetweenOrEqualTo(
+        float|int|NumericalComparableProperty $first,
+        float|int|NumericalComparableProperty $second
+    ): bool
+    {
+        return parent::isNotBetweenOrEqualTo($first, $second);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isInteger(): bool
+    {
+        return parent::isInteger();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotInteger(): bool
+    {
+        return parent::isNotInteger();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isFloat(): bool
+    {
+        return parent::isFloat();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotFloat(): bool
+    {
+        return parent::isNotFloat();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isEven(): bool
+    {
+        return parent::isEven();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotEven(): bool
+    {
+        return parent::isNotEven();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isOdd(): bool
+    {
+        return parent::isOdd();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNotOdd(): bool
+    {
+        return parent::isNotOdd();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function round(int $precision = 0, int $mode = PHP_ROUND_HALF_UP): static
+    {
+        return parent::round($precision, $mode);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function ceil(int $precision = 0): static
+    {
+        return parent::ceil($precision);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function floor(int $precision = 0): static
+    {
+        return parent::floor($precision);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function hasSameValueAs(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::hasSameValueAs($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function hasNotSameValueAs(float|int|NumericalComparableProperty $property): bool
+    {
+        return parent::hasNotSameValueAs($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function is(float|ComparableProperty|int $property, bool $strict = false): bool
+    {
+        if (!is_int($property) && !is_float($property) && !$property instanceof self) {
+            return false;
+        }
+
+        if ($strict && (is_int($property) || is_float($property))) {
+            return false;
+        }
+
+        if ($strict && !$this->getUnit()->is($property->getUnit())) {
+            return false;
+        }
+
+        if ($strict && !$this->getVAT()->is($property->getVAT(), $strict)) {
+            return false;
+        }
+
+        if ($property instanceof self) {
+            $property->convertToUnit($this->getUnit());
+            $property->forCountry($this->getVAT()->getCountryCode());
+        }
+
+        return $this->hasSameValueAs($property) && $this->hasSameValueWithVATAs($property);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isNot(float|ComparableProperty|int $property, bool $strict = false): bool
+    {
+        return parent::isNot($property, $strict);
+    }
+
+    /**
+     * Checks that the value with VAT is same as the value of given property.
+     *
+     * @param \MiBo\Properties\Contracts\ComparableProperty|float|int $property
+     *
+     * @return bool
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function hasSameValueWithVATAs(ComparableProperty|float|int $property): bool
+    {
+        if (is_int($property) || is_float($property)) {
+            return $this->getValueWithVAT() === $property || (float) $this->getValueWithVAT() === (float) $property;
+        }
+
+        if (!$property instanceof self) {
+            return false;
+        }
+
+        return $this->getValueWithVAT() === $property->getValueWithVAT();
+    }
+
+    /**
+     * Checks that the value with VAT is not same as the value of given property.
+     *
+     * @param \MiBo\Properties\Contracts\ComparableProperty|float|int $property
+     *
+     * @return bool
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function hasNotSameValueWithVATAs(ComparableProperty|float|int $property): bool
+    {
+        return !$this->hasSameValueWithVATAs($property);
+    }
+
+    /**
+     * Checks that the value with VAT is same as the value of given property.
+     *
+     * **This method converts the property if not same unit and VAT!**
+     *
+     * @param \MiBo\Properties\Contracts\ComparableProperty|float|int $property
+     *
+     * @return bool
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isWithVATEqualTo(ComparableProperty|float|int $property): bool
+    {
+        if ($property instanceof self) {
+            $property->convertToUnit($this->getUnit());
+            $property->forCountry($this->getVAT()->getCountryCode());
+        }
+
+        return $this->hasSameValueWithVATAs($property);
+    }
+
+    /**
+     * Checks that the value with VAT is same as the value of given property.
+     *
+     * **This method converts the property if not same unit and VAT!**
+     *
+     * @param \MiBo\Properties\Contracts\ComparableProperty|float|int $property
+     *
+     * @return bool
+     *
+     * @experimental This method is in experimental phase and its result may change in the future. The only
+     *     reason of that is that comparing prices with different VAT rates and currencies is not a trivial
+     *     task.
+     * @deprecated See experimental note.
+     */
+    public function isWithVATNotEqualTo(ComparableProperty|float|int $property): bool
+    {
+        return !$this->isWithVATEqualTo($property);
+    }
+
+    // @codeCoverageIgnoreEnd
 
     /**
      * @inheritDoc

@@ -50,7 +50,7 @@ trait PriceHelper
     /**
      * @inheritDoc
      */
-    public function multiply(int|float|NumericalProperty $value): static
+    public function multiply(int|float|NumericalProperty $value): NumericalProperty
     {
         parent::multiply($value);
 
@@ -66,7 +66,7 @@ trait PriceHelper
     /**
      * @inheritDoc
      */
-    public function divide(NumericalProperty|float|int $value): static
+    public function divide(NumericalProperty|float|int $value): NumericalProperty
     {
         parent::divide($value);
 

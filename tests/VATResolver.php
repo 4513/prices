@@ -57,10 +57,14 @@ class VATResolver implements Resolver, Convertor
                 "08"         => VATRate::NONE,
                 "09"         => VATRate::NONE,
                 "10"         => VATRate::NONE,
+                "1"          => VATRate::STANDARD,
+                "2"          => VATRate::STANDARD,
             ],
             "SVK" => [
                 "07" => VATRate::REDUCED,
                 "08" => VATRate::REDUCED, // 36.75
+                "1"  => VATRate::STANDARD,
+                "2"  => VATRate::STANDARD,
             ],
         ];
     }
@@ -78,9 +82,10 @@ class VATResolver implements Resolver, Convertor
                 VATRate::NONE->name           => 0,
             ],
             "SVK" => [
-                VATRate::STANDARD->name => 0.20,
-                VATRate::REDUCED->name  => 0.10,
-                VATRate::NONE->name     => 0,
+                VATRate::STANDARD->name       => 0.20,
+                VATRate::REDUCED->name        => 0.10,
+                VATRate::NONE->name           => 0,
+                VATRate::SECOND_REDUCED->name => 0.20,
             ],
         ];
     }
