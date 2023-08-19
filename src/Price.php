@@ -609,7 +609,7 @@ class Price extends NumericalProperty implements PriceInterface
             return false;
         }
 
-        if ($strict && !$this->getVAT()->is($property->getVAT(), $strict)) {
+        if ($strict && !$this->getVAT()->is($property->getVAT())) {
             return false;
         }
 
