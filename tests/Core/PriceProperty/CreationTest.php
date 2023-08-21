@@ -31,6 +31,7 @@ class CreationTest extends TestCase
      * @covers ::__construct
      * @covers ::getValue
      * @covers ::getBaseValue
+     * @covers ::getDateTime
      *
      * @return void
      */
@@ -46,5 +47,10 @@ class CreationTest extends TestCase
 
         $this->assertSame(50, $price->getValue());
         $this->assertSame($price->getValue(), $price->getBaseValue());
+        $this->assertNull($price->getDateTime());
+
+        $price = new Price(50, Currency::get("EUR"), null, new \DateTime());
+
+        $this->assertLessThanOrEqual(time(), $price->getDateTime()->getTimestamp());
     }
 }
