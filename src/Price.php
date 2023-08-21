@@ -218,6 +218,16 @@ class Price extends NumericalProperty implements PriceInterface
         return $this;
     }
 
+    /**
+     * Datetime of the price.
+     *
+     * @return \DateTime|null
+     */
+    public function getDateTime(): ?DateTime
+    {
+        return $this->time;
+    }
+
     // @codeCoverageIgnoreStart
 
     /**

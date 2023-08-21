@@ -36,8 +36,11 @@ class PriceCalc
         }
 
         return $price->getNumericalValue()->getValue(
-            $price->getUnit()->getMinorUnitRate() ?? 0
-        ) * ProxyResolver::getPercentageOf($price->getVAT());
+                $price->getUnit()->getMinorUnitRate() ?? 0
+            ) * ProxyResolver::getPercentageOf(
+                $price->getVAT(),
+                method_exists($price, 'getDateTime') ? $price->getDateTime() : null
+            );
     }
 
     /**
