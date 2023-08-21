@@ -151,4 +151,24 @@ class Currency implements NumericalUnit, CurrencyInterface
     {
         return $unit instanceof CurrencyInterface && $this->currency->is($unit);
     }
+
+    /**
+     * Debug info.
+     *
+     * @return array{
+     *     name: string,
+     *     alphabeticalCode: string,
+     *     minorUnitRate: int|null,
+     *     numericalCode: string
+     * }
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'name'             => $this->getName(),
+            'alphabeticalCode' => $this->getAlphabeticalCode(),
+            'numericalCode'    => $this->getNumericalCode(),
+            'minorUnitRate'    => $this->getMinorUnitRate(),
+        ];
+    }
 }

@@ -54,6 +54,7 @@ class UnitTest extends TestCase
      * @covers ::setCurrencyProvider
      * @covers ::is
      * @covers ::get
+     * @covers ::__debugInfo
      *
      * @return void
      */
@@ -74,5 +75,16 @@ class UnitTest extends TestCase
 
         Currency::get();
         $this->assertNotNull(Currency::setCurrencyProvider(null));
+
+        $currency = Currency::get("EUR");
+        $this->assertSame(
+            [
+                "name"             => "Euro",
+                "alphabeticalCode" => "EUR",
+                "numericalCode"    => "978",
+                "minorUnitRate"    => 2,
+            ],
+            $currency->__debugInfo()
+        );
     }
 }

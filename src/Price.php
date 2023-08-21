@@ -228,6 +228,17 @@ class Price extends NumericalProperty implements PriceInterface
         return $this->time;
     }
 
+    /**
+     * @inheritDoc
+     *
+     * @return \MiBo\Prices\Units\Price\Currency
+     */
+    public function getUnit(): Unit
+    {
+        /** @phpstan-var \MiBo\Prices\Units\Price\Currency */
+        return parent::getUnit();
+    }
+
     // @codeCoverageIgnoreStart
 
     /**
@@ -739,5 +750,39 @@ class Price extends NumericalProperty implements PriceInterface
         parent::__clone();
 
         $this->prices = array_map(fn (PriceInterface $price) => clone $price, $this->prices);
+    }
+
+    /**
+     * Debug info.
+     *
+     * @return array{
+     *     price: int|float,
+     *     priceWithVAT: int|float,
+     *     valueOfVAT: int|float,
+     *     currency: string,
+     *     VAT: string,
+     *     time: string|null,
+     *     details: array{
+     *         unit: \MiBo\Prices\Units\Price\Currency,
+     *         VAT: \MiBo\VAT\VAT,
+     *         prices: array<\MiBo\Prices\Contracts\PriceInterface>
+     *     }
+     * }
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'price'        => $this->getValue(),
+            'priceWithVAT' => $this->getValueWithVAT(),
+            'valueOfVAT'   => $this->getValueOfVAT(),
+            'currency'     => $this->getUnit()->getAlphabeticalCode(),
+            'VAT'          => $this->getVAT()->getRate()->name,
+            'time'         => $this->getDateTime()?->format(DateTime::ATOM),
+            'details'      => [
+                'unit'   => $this->getUnit(),
+                'VAT'    => $this->getVAT(),
+                'prices' => $this->getNestedPrices(),
+            ],
+        ];
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Tests\Core\PriceProperty;
 
+use DateTime;
 use MiBo\Prices\Price;
 use MiBo\Prices\Units\Price\Currency;
 use MiBo\Properties\Value;
@@ -32,6 +33,8 @@ class CreationTest extends TestCase
      * @covers ::getValue
      * @covers ::getBaseValue
      * @covers ::getDateTime
+     * @covers ::getUnit
+     * @covers ::__debugInfo
      *
      * @return void
      */
@@ -49,8 +52,23 @@ class CreationTest extends TestCase
         $this->assertSame($price->getValue(), $price->getBaseValue());
         $this->assertNull($price->getDateTime());
 
-        $price = new Price(50, Currency::get("EUR"), null, new \DateTime());
+        $time  = new DateTime();
+        $price = new Price(50, Currency::get("EUR"), null, $time);
 
-        $this->assertLessThanOrEqual(time(), $price->getDateTime()->getTimestamp());
+        $this->assertEquals($time->getTimestamp(), $price->getDateTime()->getTimestamp());
+
+        $this->assertSame(
+            [
+                'price'        => 50,
+                'priceWithVAT' => 50,
+                'valueOfVAT'   => 0,
+                'currency'     => "EUR",
+                'VAT'          => VATRate::NONE->name,
+                'time'         => $time->format(DateTime::ATOM),
+            ],
+            array_filter($price->__debugInfo(), function(string $key): bool {
+                return $key !== 'details';
+            }, ARRAY_FILTER_USE_KEY)
+        );
     }
 }
