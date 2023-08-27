@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Calculators;
 
+use BadMethodCallException;
+use DomainException;
+use MiBo\Prices\Contracts\PriceCalculatorHelper;
+use MiBo\Prices\Contracts\PriceComparer;
 use MiBo\Prices\Contracts\PriceInterface;
 use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\Resolvers\ProxyResolver;
@@ -19,9 +23,16 @@ use MiBo\VAT\VAT;
  * @since 0.1
  *
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise.
+ *
+ * @mixin \MiBo\Prices\Contracts\PriceCalculatorHelper
+ * @mixin \MiBo\Prices\Contracts\PriceComparer
  */
 class PriceCalc
 {
+    private static ?PriceCalculatorHelper $calculatorHelper = null;
+
+    private static ?PriceComparer $comparerHelper = null;
+
     /**
      * Returns the value of the VAT of the amount.
      *
@@ -35,12 +46,17 @@ class PriceCalc
             return 0;
         }
 
-        return $price->getNumericalValue()->getValue(
-                $price->getUnit()->getMinorUnitRate() ?? 0
-            ) * ProxyResolver::getPercentageOf(
+        $minorUnitRate = $price->getUnit()->getMinorUnitRate() ?? 0;
+        $vatValue      = round(
+            $price->getNumericalValue()->getValue($price->getUnit()->getMinorUnitRate() ?? 0)
+            * ProxyResolver::getPercentageOf(
                 $price->getVAT(),
                 method_exists($price, 'getDateTime') ? $price->getDateTime() : null
-            );
+            ),
+            $minorUnitRate
+        );
+
+        return $minorUnitRate === 0 ? (int) $vatValue : $vatValue;
     }
 
     /**
@@ -92,5 +108,90 @@ class PriceCalc
             $addend->getNumericalValue()->getValue($addend->getUnit()->getMinorUnitRate() ?? 0),
             $vat,
         ];
+    }
+
+    /**
+     * @param PriceCalculatorHelper $calculatorHelper
+     *
+     * @return void
+     */
+    public static function setCalculatorHelper(PriceCalculatorHelper $calculatorHelper): void
+    {
+        self::$calculatorHelper = $calculatorHelper;
+    }
+
+    /**
+     * @param \MiBo\Prices\Contracts\PriceComparer $comparerHelper
+     *
+     * @return void
+     */
+    public static function setComparerHelper(PriceComparer $comparerHelper): void
+    {
+        self::$comparerHelper = $comparerHelper;
+    }
+
+    /**
+     * @param string $name
+     * @param array<int, mixed> $arguments
+     *
+     * @return array<string, int|float>|bool|object|float|int|null
+     */
+    public static function __callStatic(string $name, array $arguments): mixed
+    {
+        $helper = [
+            'round',
+            'ceil',
+            'floor',
+        ];
+
+        if (in_array($name, $helper)) {
+            if (self::$calculatorHelper === null) {
+                throw new DomainException('The PriceCalculatorHelper is not set.');
+            }
+
+            return self::$calculatorHelper->$name(...$arguments);
+        }
+
+        $helper = [
+            'checkThat',
+            'isLessThan',
+            'isNotLessThan',
+            'isLessThanOrEqual',
+            'isNotLessThanOrEqual',
+            'isGreaterThan',
+            'isNotGreaterThan',
+            'isGreaterThanOrEqual',
+            'isNotGreaterThanOrEqual',
+            'isEqual',
+            'isNotEqual',
+            'isBetween',
+            'isNotBetween',
+            'isBetweenOrEqual',
+            'isNotBetweenOrEqual',
+            'isInteger',
+            'isNotInteger',
+            'isFloat',
+            'isNotFloat',
+            'isEvent',
+            'isNotEvent',
+            'isOdd',
+            'isNotOdd',
+            'hasSameValueAs',
+            'hasNotSameValueAs',
+            'is',
+            'isNot',
+            'hasSameValueWithVATAs',
+            'hasNotSameValueWithVATAs',
+        ];
+
+        if (in_array($name, $helper)) {
+            if (self::$comparerHelper === null) {
+                throw new DomainException('The PriceComparer is not set.');
+            }
+
+            return self::$comparerHelper->$name(...$arguments);
+        }
+
+        throw new BadMethodCallException('Method ' . $name . ' does not exist.');
     }
 }

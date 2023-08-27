@@ -59,6 +59,11 @@ class Currency implements NumericalUnit, CurrencyInterface
 
     /**
      * @param \MiBo\Currencies\CurrencyInterface $currency
+     *
+     *  This method is ignored out of coverage, because the methods is called only once and without a custom
+     * run configuration for tests, there is no guarantee that the method will be called while testing.
+     *
+     * @codeCoverageIgnore
      */
     public function __construct(CurrencyInterface $currency)
     {
