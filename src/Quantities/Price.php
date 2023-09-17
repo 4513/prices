@@ -47,4 +47,12 @@ class Price implements Quantity
     {
         return Currency::get();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public static function getNameForTranslation(): string
+    {
+        return 'price';
+    }
 }
