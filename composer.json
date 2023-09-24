@@ -26,6 +26,7 @@
             "email": "michal.boris27@gmail.com"
         }
     ],
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "MiBo\\Prices\\": "src/"
