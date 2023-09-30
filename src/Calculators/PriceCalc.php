@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MiBo\Prices\Calculators;
 
 use BadMethodCallException;
+use Closure;
 use DomainException;
 use MiBo\Prices\Contracts\PriceCalculatorHelper;
 use MiBo\Prices\Contracts\PriceComparer;
@@ -33,6 +34,9 @@ class PriceCalc
 
     private static ?PriceComparer $comparerHelper = null;
 
+    /** @var \Closure(\MiBo\Prices\Contracts\PriceInterface): (int|float)|null */
+    public static ?Closure $getValueOfVAT = null;
+
     /**
      * Returns the value of the VAT of the amount.
      *
@@ -46,17 +50,23 @@ class PriceCalc
             return 0;
         }
 
-        $minorUnitRate = $price->getUnit()->getMinorUnitRate() ?? 0;
-        $vatValue      = round(
-            $price->getNumericalValue()->getValue($price->getUnit()->getMinorUnitRate() ?? 0)
-            * ProxyResolver::getPercentageOf(
-                $price->getVAT(),
-                method_exists($price, 'getDateTime') ? $price->getDateTime() : null
-            ),
-            $minorUnitRate
-        );
+        if (self::$getValueOfVAT === null) {
+            self::$getValueOfVAT = static function(PriceInterface $price): int|float {
+                $minorUnitRate = $price->getUnit()->getMinorUnitRate() ?? 0;
+                $vatValue      = round(
+                    $price->getNumericalValue()->getValue($price->getUnit()->getMinorUnitRate() ?? 0)
+                    * ProxyResolver::getPercentageOf(
+                        $price->getVAT(),
+                        method_exists($price, 'getDateTime') ? $price->getDateTime() : null
+                    ),
+                    $minorUnitRate
+                );
 
-        return $minorUnitRate === 0 ? (int) $vatValue : $vatValue;
+                return $minorUnitRate === 0 ? (int) $vatValue : $vatValue;
+            };
+        }
+
+        return (self::$getValueOfVAT)($price);
     }
 
     /**
@@ -108,6 +118,16 @@ class PriceCalc
             $addend->getNumericalValue()->getValue($addend->getUnit()->getMinorUnitRate() ?? 0),
             $vat,
         ];
+    }
+
+    /**
+     * @param \Closure(\MiBo\Prices\Contracts\PriceInterface): (int|float)|null $closure
+     *
+     * @return void
+     */
+    public static function setValueOfVATClosure(?Closure $closure): void
+    {
+        self::$getValueOfVAT = $closure;
     }
 
     /**

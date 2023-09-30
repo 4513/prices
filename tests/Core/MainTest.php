@@ -87,6 +87,33 @@ class MainTest extends TestCase
     /**
      * @small
      *
+     * @covers ::setValueOfVATClosure
+     * @covers ::getValueOfVAT
+     *
+     * @return void
+     */
+    public function testNullGetValueOfVAT(): void
+    {
+        PriceCalc::setValueOfVATClosure(null);
+        PriceCalc::getValueOfVAT(
+            new Price(0, Currency::get('CZK'), ProxyResolver::retrieveByCategory('06', 'CZE'))
+        );
+
+        PriceCalc::setValueOfVATClosure(function(): int {
+            return 0;
+        });
+
+        $this->assertEquals(
+            0,
+            PriceCalc::getValueOfVAT(
+                new Price(0, Currency::get('CZK'), ProxyResolver::retrieveByCategory('06', 'CZE'))
+            )
+        );
+    }
+
+    /**
+     * @small
+     *
      * @covers ::add
      *
      * @return void
@@ -231,5 +258,14 @@ class MainTest extends TestCase
 
             return $price->getNumericalValue()->divide(25);
         };
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function tearDown(): void
+    {
+        PriceCalc::setValueOfVATClosure(null);
+        parent::tearDown();
     }
 }
