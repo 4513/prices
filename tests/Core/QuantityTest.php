@@ -29,6 +29,7 @@ class QuantityTest extends TestCase
      * @covers ::getDimensionSymbol
      * @covers ::getDefaultProperty
      * @covers ::getInitialUnit
+     * @covers ::getNameForTranslation
      *
      * @return void
      */
@@ -37,5 +38,6 @@ class QuantityTest extends TestCase
         $this->assertSame("PRICE", Price::getDimensionSymbol());
         $this->assertSame(\MiBo\Prices\Price::class, Price::getDefaultProperty());
         $this->assertInstanceOf(Currency::class, Price::getDefaultUnit());
+        $this->assertSame('price', Price::getNameForTranslation());
     }
 }

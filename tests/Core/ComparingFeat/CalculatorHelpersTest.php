@@ -8,7 +8,9 @@ use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Price;
 use MiBo\Prices\Tests\TestingComparer;
 use MiBo\Prices\Tests\TestingRounder;
+use MiBo\Prices\Tests\VATResolver;
 use MiBo\Prices\Units\Price\Currency;
+use MiBo\VAT\Manager;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -32,6 +34,8 @@ class CalculatorHelpersTest extends TestCase
      * @covers ::setCalculatorHelper
      * @covers ::setComparerHelper
      * @covers ::__callStatic
+     * @covers ::getVATManager
+     * @covers ::setVATManager
      *
      * @return void
      */
@@ -54,6 +58,16 @@ class CalculatorHelpersTest extends TestCase
 
         $price->isLessThan(10);
         $price->ceil();
+
+        try {
+            PriceCalc::getVATManager();
+        } catch (\ValueError) {}
+
+        $helper = new VATResolver();
+
+        PriceCalc::setVATManager(new Manager($helper, $helper, $helper));
+
+        $this->assertInstanceOf(Manager::class, PriceCalc::getVATManager());
 
         $this->expectException(\BadMethodCallException::class);
         PriceCalc::someRandomMethodThatDoesNotExist();
