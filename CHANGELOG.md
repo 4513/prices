@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2023-11-05
+
+### Added
+* PriceCalc - VAT Manager usage
+* PriceInterface - getDateTime method
+* Taxonomies - 2 simple product taxonomies for combined and any VAT rates
+
+### Changed
+* VAT dependency from 1 to 2
+* PriceCalc - most methods marked as final
+
 ## [1.3.0] - 2023-09-30
 
 ### Added

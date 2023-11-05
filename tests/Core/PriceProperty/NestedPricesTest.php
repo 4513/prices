@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Tests\Core\PriceProperty;
 
+use DateTime;
 use MiBo\Prices\Price;
+use MiBo\Prices\Tests\TestingClassification;
 use MiBo\Prices\Units\Price\Currency;
 use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\VAT;
@@ -38,7 +40,12 @@ class NestedPricesTest extends TestCase
      */
     public function testNesting(): void
     {
-        $price = new Price(100, Currency::get(), VAT::get("CZE", VATRate::STANDARD, "food"));
+        $price = new Price(100, Currency::get(), VAT::get(
+            "CZE",
+            VATRate::STANDARD,
+            new TestingClassification("food"),
+            new DateTime()
+        ));
         $price->add(new Price(1, Currency::get()));
 
         $this->assertSame(101, $price->getValue());

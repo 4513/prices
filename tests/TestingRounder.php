@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace MiBo\Prices\Tests;
 
@@ -22,16 +22,16 @@ class TestingRounder implements PriceCalculatorHelper
 {
     public function round(PriceInterface $price, int $precision = 0, int $mode = PHP_ROUND_HALF_UP): array
     {
-        return [$price->getVAT()->getCategory() ?? '' => round($price->getValue(), $precision, $mode)];
+        return [$price->getVAT()->getClassification()->getCode() => round($price->getValue(), $precision, $mode)];
     }
 
     public function ceil(PriceInterface $price, int $precision = 0): array
     {
-        return [$price->getVAT()->getCategory() ?? '' => ceil($price->getValue())];
+        return [$price->getVAT()->getClassification()->getCode() => ceil($price->getValue())];
     }
 
     public function floor(PriceInterface $price, int $precision = 0): array
     {
-        return [$price->getVAT()->getCategory() ?? '' => floor($price->getValue())];
+        return [$price->getVAT()->getClassification()->getCode() => floor($price->getValue())];
     }
 }

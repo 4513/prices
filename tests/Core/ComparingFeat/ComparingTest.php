@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Tests\ComparingFeat;
 
+use DateTime;
 use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Price;
+use MiBo\Prices\Tests\TestingClassification;
 use MiBo\Prices\Tests\TestingComparer;
 use MiBo\Prices\Tests\VATResolver;
 use MiBo\Prices\Tests\ComparingStatusEnum;
@@ -26,7 +28,7 @@ use MiBo\Properties\Units\LuminousIntensity\Candela;
 use MiBo\Properties\Units\Mass\KiloGram;
 use MiBo\Properties\Units\ThermodynamicTemperature\DegreeCelsius;
 use MiBo\VAT\Enums\VATRate;
-use MiBo\VAT\Resolvers\ProxyResolver;
+use MiBo\VAT\Manager;
 use MiBo\VAT\VAT;
 use PHPUnit\Framework\TestCase;
 use ValueError;
@@ -345,7 +347,9 @@ class ComparingTest extends TestCase
     {
         parent::setUp();
 
-        ProxyResolver::setResolver(VATResolver::class);
+        $vatHelper = new VATResolver();
+
+        PriceCalc::setVATManager(new Manager($vatHelper, $vatHelper, $vatHelper));
 
         // Setting conversion rate between CZK and EUR => 1 EUR = 25 CZK
         UnitConvertor::$unitConvertors[\MiBo\Prices\Quantities\Price::class] = function(Price $price, Currency $unit) {
@@ -373,8 +377,12 @@ class ComparingTest extends TestCase
                     ComparingStatusEnum::IS_SAME,
                     ComparingStatusEnum::IS_SAME_STRICT,
                 ],
-                new Price(10, Currency::get("CZK"), VAT::get("CZE", VATRate::STANDARD, "1")),
-                new Price(10, Currency::get("CZK"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("CZK"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
+                new Price(10, Currency::get("CZK"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             'Returning same prices with different currency (same on conversion)'                                               => [
                 [
@@ -385,16 +393,24 @@ class ComparingTest extends TestCase
                     ComparingStatusEnum::IS_SAME,
                     ComparingStatusEnum::IS_SAME_STRICT,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
-                new Price(250, Currency::get("CZK"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
+                new Price(250, Currency::get("CZK"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             'Returning not the same prices'                                                                                    => [
                 [
                     ComparingStatusEnum::PRICE_EQUALS,
                     ComparingStatusEnum::PRICE_CHANGED_GREATER,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
-                new Price(10, Currency::get("CZK"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
+                new Price(10, Currency::get("CZK"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             'Returning not the same prices in same currency'                                                                   => [
                 [
@@ -402,8 +418,12 @@ class ComparingTest extends TestCase
                     ComparingStatusEnum::PRICE_WITH_VAT_SMALLER,
                     ComparingStatusEnum::PRICE_CHANGED_SMALLER,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
-                new Price(12, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "2")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
+                new Price(12, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('2'), new DateTime()
+                )),
             ],
             'Returning same prices with different product classification category'                                             => [
                 [
@@ -414,8 +434,12 @@ class ComparingTest extends TestCase
                     ComparingStatusEnum::IS_SAME,
                     ComparingStatusEnum::IS_SAME_STRICT,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "2")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('2'), new DateTime()
+                )),
             ],
             'Returning same prices with different product classification category and different currency'                      => [
                 [
@@ -426,8 +450,12 @@ class ComparingTest extends TestCase
                     ComparingStatusEnum::IS_SAME,
                     ComparingStatusEnum::IS_SAME_STRICT,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
-                new Price(250, Currency::get("CZK"), VAT::get("CZE", VATRate::STANDARD, "2")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
+                new Price(250, Currency::get("CZK"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('2'), new DateTime()
+                )),
             ],
             'Returning same prices with different product classification category and different currency (same on conversion)' => [
                 [
@@ -438,8 +466,12 @@ class ComparingTest extends TestCase
                     ComparingStatusEnum::IS_SAME,
                     ComparingStatusEnum::IS_SAME_STRICT,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
-                new Price(250, Currency::get("CZK"), VAT::get("CZE", VATRate::STANDARD, "2")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
+                new Price(250, Currency::get("CZK"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('2'), new DateTime()
+                )),
             ],
             'Returning same prices with different VAT rate'                                                                    => [
                 [
@@ -450,15 +482,21 @@ class ComparingTest extends TestCase
                     ComparingStatusEnum::IS_SAME,
                     ComparingStatusEnum::IS_SAME_STRICT,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::REDUCED, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::REDUCED, new TestingClassification('1'), new DateTime()
+                )),
             ],
             'Returning integer'                                                                                                => [
                 [
                     ComparingStatusEnum::PRICE_EQUALS,
                     ComparingStatusEnum::PRICE_CHANGED_EQUALS,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
                 10,
             ],
             'Returning integer same value with vat'                                                                            => [
@@ -467,7 +505,9 @@ class ComparingTest extends TestCase
                     ComparingStatusEnum::PRICE_WITH_VAT_EQUALS,
                     ComparingStatusEnum::VALUE_WITH_VAT_EQUALS,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
                 12.1,
             ],
             'Returning integer same value'                                                                                     => [
@@ -478,7 +518,9 @@ class ComparingTest extends TestCase
                     ComparingStatusEnum::PRICE_WITH_VAT_EQUALS,
                     ComparingStatusEnum::IS_SAME,
                 ],
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::NONE, "10")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::NONE, new TestingClassification('10'), new DateTime()
+                )),
                 10,
             ],
         ];
@@ -489,7 +531,9 @@ class ComparingTest extends TestCase
         return [
             'Same'    => [
                 null,
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
                 [
                     10,
                     10.0,
@@ -499,7 +543,9 @@ class ComparingTest extends TestCase
             ],
             'Less'    => [
                 true,
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
                 [
                     9,
                     9.0,
@@ -514,7 +560,9 @@ class ComparingTest extends TestCase
             ],
             'Greater' => [
                 false,
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
                 [
                     11,
                     11.0,
@@ -536,79 +584,117 @@ class ComparingTest extends TestCase
         return [
             [
                 true,
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 true,
-                new Price(12, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(12, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 true,
-                new Price(0, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(0, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 true,
-                new Price(2, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(2, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 true,
-                new Price(100, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(100, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 true,
-                new Price(60, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(60, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 null,
-                new Price(50.2, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(50.2, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 false,
-                new Price(1, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(1, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 false,
-                new Price(3, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(3, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 false,
-                new Price(15, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(15, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 false,
-                new Price(9, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(9, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 false,
-                new Price(-1, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(-1, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 false,
-                new Price(1, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(1, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 false,
-                new Price(01, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(01, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 null,
-                new Price(10.1, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10.1, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 null,
-                new Price(10.2, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10.2, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 null,
-                new Price(-0.04, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(-0.04, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 true,
-                new Price(-10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(-10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
             [
                 true,
-                new Price(-2, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(-2, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
             ],
         ];
     }
@@ -658,17 +744,23 @@ class ComparingTest extends TestCase
     {
         return [
             [
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
                 9,
                 11,
             ],
             [
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
                 9.9,
                 11,
             ],
             [
-                new Price(10, Currency::get("EUR"), VAT::get("CZE", VATRate::STANDARD, "1")),
+                new Price(10, Currency::get("EUR"), VAT::get(
+                    "CZE", VATRate::STANDARD, new TestingClassification('1'), new DateTime()
+                )),
                 -1,
                 10.1,
             ],

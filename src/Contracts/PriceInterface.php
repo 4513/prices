@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Contracts;
 
+use DateTimeInterface;
 use MiBo\Properties\Contracts\NumericalProperty;
 use MiBo\VAT\VAT;
 
@@ -69,6 +70,15 @@ interface PriceInterface extends NumericalProperty
      * @return array<string, \MiBo\Prices\Contracts\PriceInterface>
      */
     public function getNestedPrices(): array;
+
+    /**
+     * The date for which the price is valid.
+     *
+     * @since 2.0
+     *
+     * @return \DateTimeInterface
+     */
+    public function getDateTime(): DateTimeInterface;
 
     /**
      * Changes the Price (normally the VAT) for the given country code.

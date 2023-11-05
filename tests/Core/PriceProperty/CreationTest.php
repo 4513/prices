@@ -42,7 +42,7 @@ class CreationTest extends TestCase
     {
         $price = new Price(50, Currency::get("EUR"));
 
-        $this->assertSame(VATRate::NONE, $price->getVAT()->getRate());
+        $this->assertSame(VATRate::ANY->name, $price->getVAT()->getRate()->name);
         $this->assertSame(50, $price->getValue());
         $this->assertSame("Euro", $price->getUnit()->getName());
 
@@ -50,7 +50,7 @@ class CreationTest extends TestCase
 
         $this->assertSame(50, $price->getValue());
         $this->assertSame($price->getValue(), $price->getBaseValue());
-        $this->assertNull($price->getDateTime());
+        $this->assertNotNull($price->getDateTime());
 
         $time  = new DateTime();
         $price = new Price(50, Currency::get("EUR"), null, $time);
@@ -63,7 +63,7 @@ class CreationTest extends TestCase
                 'priceWithVAT' => 50,
                 'valueOfVAT'   => 0,
                 'currency'     => "EUR",
-                'VAT'          => VATRate::NONE->name,
+                'VAT'          => VATRate::ANY->name,
                 'time'         => $time->format(DateTime::ATOM),
             ],
             array_filter($price->__debugInfo(), function(string $key): bool {

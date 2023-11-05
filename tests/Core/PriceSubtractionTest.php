@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Tests;
 
+use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Price;
 use MiBo\Prices\Units\Price\Currency;
 use MiBo\Properties\Calculators\UnitConvertor;
-use MiBo\VAT\Resolvers\ProxyResolver;
+use MiBo\VAT\Manager;
+use MiBo\VAT\VAT;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -35,13 +37,13 @@ class PriceSubtractionTest extends TestCase
      */
     public function testSubtractingCombinedOnCombined(): void
     {
-        $price = new Price(100, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
-        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
-        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price = new Price(100, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
+        $price->subtract(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
+        $price->subtract(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
 
         $this->assertSame(80, $price->getValue());
 
-        $price = (new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")))
+        $price = (new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("2201", "CZE")))
             ->subtract($price);
 
         $price->subtract(clone $price);
@@ -61,13 +63,13 @@ class PriceSubtractionTest extends TestCase
      */
     public function testSubtractingCombined(): void
     {
-        $price = new Price(100, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
-        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
-        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price = new Price(100, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
+        $price->subtract(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
+        $price->subtract(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
 
         $this->assertSame(80, $price->getValue());
 
-        $price = (new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")))
+        $price = (new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("2201", "CZE")))
             ->subtract($price);
 
         $this->assertSame(-70, $price->getValue());
@@ -84,14 +86,14 @@ class PriceSubtractionTest extends TestCase
      */
     public function testSubtractingOnCombined(): void
     {
-        $price = new Price(100, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
-        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
-        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price = new Price(100, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
+        $price->subtract(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
+        $price->subtract(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
 
         $this->assertSame(80, $price->getValue());
         $this->assertSame(15.0, $price->getValueOfVAT());
 
-        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")));
+        $price->subtract(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("2201", "CZE")));
 
         $this->assertSame(70, $price->getValue());
         $this->assertTrue($price->getVAT()->getRate()->isCombined());
@@ -108,13 +110,13 @@ class PriceSubtractionTest extends TestCase
      */
     public function testSubtractingDifferentVAT(): void
     {
-        $price = new Price(100, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $price = new Price(100, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
 
         $this->assertSame(100, $price->getValue());
         $this->assertSame(100, $price->getNumericalValue()->getValue(2));
         $this->assertSame(15.0, $price->getValueOfVAT());
 
-        $price->subtract(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price->subtract(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
 
         $this->assertSame(90, $price->getValue());
         $this->assertSame(90, $price->getValue());
@@ -134,12 +136,12 @@ class PriceSubtractionTest extends TestCase
      */
     public function testSubtractingSameVAT(): void
     {
-        $price = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $price = new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
 
         $this->assertSame(10, $price->getValue());
         $this->assertSame(10, $price->getNumericalValue()->getValue(2));
 
-        $price->subtract(new Price(5, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE")));
+        $price->subtract(new Price(5, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE")));
 
         $this->assertSame(5, $price->getValue());
         $this->assertSame(5, $price->getNumericalValue()->getValue(2));
@@ -153,7 +155,9 @@ class PriceSubtractionTest extends TestCase
     {
         parent::setUp();
 
-        ProxyResolver::setResolver(VATResolver::class);
+        $vatHelper = new VATResolver();
+
+        PriceCalc::setVATManager(new Manager($vatHelper, $vatHelper, $vatHelper));
 
         // Setting conversion rate between CZK and EUR => 1 EUR = 25 CZK
         UnitConvertor::$unitConvertors[\MiBo\Prices\Quantities\Price::class] = function(Price $price, Currency $unit) {
@@ -165,5 +169,10 @@ class PriceSubtractionTest extends TestCase
 
             return $price->getNumericalValue()->divide(25);
         };
+    }
+
+    protected function retrieveVATByCategory(string $category, string $country): VAT
+    {
+        return PriceCalc::getVATManager()->retrieveVAT(new TestingClassification($category), $country);
     }
 }

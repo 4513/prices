@@ -5,18 +5,17 @@ declare(strict_types=1);
 namespace MiBo\Prices;
 
 use DateTime;
+use DateTimeInterface;
 use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Contracts\PriceInterface;
+use MiBo\Prices\Taxonomies\AnyTaxonomy;
 use MiBo\Prices\Traits\PriceComparing;
 use MiBo\Prices\Traits\PriceHelper;
-use MiBo\Properties\Contracts\ComparableProperty;
-use MiBo\Properties\Contracts\NumericalComparableProperty;
 use MiBo\Properties\Contracts\NumericalProperty as ContractNumericalProperty;
 use MiBo\Properties\Contracts\Unit;
 use MiBo\Properties\NumericalProperty;
 use MiBo\Properties\Value;
 use MiBo\VAT\Enums\VATRate;
-use MiBo\VAT\Resolvers\ProxyResolver;
 use MiBo\VAT\VAT;
 use ValueError;
 use function is_float;
@@ -43,7 +42,7 @@ class Price extends NumericalProperty implements PriceInterface
     /** @var \MiBo\Prices\Units\Price\Currency */
     protected Unit $unit;
 
-    protected ?DateTime $time;
+    protected DateTime $time;
 
     private Value $initialValue;
 
@@ -57,8 +56,9 @@ class Price extends NumericalProperty implements PriceInterface
      */
     public function __construct(float|Value|int $value, Unit $unit, ?VAT $vat = null, ?DateTime $time = null)
     {
-        $this->vat  = $vat === null ? VAT::get("", VATRate::NONE) : $vat;
+        $time     ??= new DateTime();
         $this->time = $time;
+        $this->vat  = $vat === null ? VAT::get('', VATRate::ANY, AnyTaxonomy::get(), $time) : $vat;
 
         $value = $value instanceof Value ?
             $value :
@@ -69,7 +69,7 @@ class Price extends NumericalProperty implements PriceInterface
         $this->initialValue = (clone $this->getNumericalValue())->multiply(0);
         $this->initialVAT   = clone $this->getVAT();
 
-        $this->prices[$this->getVAT()->getCategory() ?? ""] = clone $this;
+        $this->prices[$this->getVAT()->getClassification()->getCode()] = clone $this;
     }
 
     /**
@@ -103,7 +103,7 @@ class Price extends NumericalProperty implements PriceInterface
         }
 
         $value->convertToUnit($this->getUnit());
-        $this->setNestedPrice($value->getVAT()->getCategory() ?? "", $value);
+        $this->setNestedPrice($value->getVAT()->getClassification()->getCode(), $value);
 
         return $this;
     }
@@ -211,7 +211,8 @@ class Price extends NumericalProperty implements PriceInterface
      */
     public function forCountry(string $countryCode): static
     {
-        $this->vat = ProxyResolver::retrieveByCategory($this->vat->getCategory() ?? "", $countryCode);
+        $this->vat = PriceCalc::getVATManager()
+            ->retrieveVAT($this->vat->getClassification(), $countryCode, $this->getDateTime());
 
         foreach ($this->prices as $price) {
             $price->forCountry($countryCode);
@@ -223,9 +224,9 @@ class Price extends NumericalProperty implements PriceInterface
     /**
      * Datetime of the price.
      *
-     * @return \DateTime|null
+     * @return \DateTimeInterface
      */
-    public function getDateTime(): ?DateTime
+    public function getDateTime(): DateTimeInterface
     {
         return $this->time;
     }
@@ -328,7 +329,7 @@ class Price extends NumericalProperty implements PriceInterface
             'valueOfVAT'   => $this->getValueOfVAT(),
             'currency'     => $this->getUnit()->getAlphabeticalCode(),
             'VAT'          => $this->getVAT()->getRate()->name,
-            'time'         => $this->getDateTime()?->format(DateTime::ATOM),
+            'time'         => $this->getDateTime()->format(DateTime::ATOM),
             'details'      => [
                 'unit'   => $this->getUnit(),
                 'VAT'    => $this->getVAT(),

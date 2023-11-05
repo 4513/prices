@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Tests\Core\PriceProperty;
 
+use DateTime;
 use MiBo\Prices\Price;
+use MiBo\Prices\Taxonomies\CombinedTaxonomy;
 use MiBo\Prices\Units\Price\Currency;
 use MiBo\Properties\Length;
 use MiBo\VAT\Enums\VATRate;
 use MiBo\VAT\VAT;
 use PHPUnit\Framework\TestCase;
+use ValueError;
 
 /**
  * Class CombinationTest
@@ -37,7 +40,7 @@ class CombinationTest extends TestCase
     {
         $price = new Price(100, Currency::get());
 
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         $price->add(Length::DECI(10));
     }
@@ -51,9 +54,14 @@ class CombinationTest extends TestCase
      */
     public function testAddingIntOnCombinedVAT(): void
     {
-        $price = new Price(100, Currency::get(), VAT::get("SVK", VATRate::COMBINED));
+        $price = new Price(100, Currency::get(), VAT::get(
+            "SVK",
+            VATRate::COMBINED,
+            CombinedTaxonomy::get(),
+            new DateTime()
+        ));
 
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         $price->add(10);
     }
@@ -83,9 +91,14 @@ class CombinationTest extends TestCase
      */
     public function testSubtractIntOnCombinedVAT(): void
     {
-        $price = new Price(100, Currency::get(), VAT::get("SVK", VATRate::COMBINED));
+        $price = new Price(100, Currency::get(), VAT::get(
+            "SVK",
+            VATRate::COMBINED,
+            CombinedTaxonomy::get(),
+            new DateTime()
+        ));
 
-        $this->expectException(\ValueError::class);
+        $this->expectException(ValueError::class);
 
         $price->subtract(10);
     }

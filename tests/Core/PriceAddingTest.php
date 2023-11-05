@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Tests;
 
+use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Price;
 use MiBo\Prices\Units\Price\Currency;
 use MiBo\Properties\Calculators\UnitConvertor;
-use MiBo\VAT\Resolvers\ProxyResolver;
+use MiBo\VAT\Manager;
+use MiBo\VAT\VAT;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -35,13 +37,13 @@ class PriceAddingTest extends TestCase
      */
     public function testAddingCombinedOnCombined(): void
     {
-        $price = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
-        $price->add(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
-        $price->add(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price = new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
+        $price->add(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
+        $price->add(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
 
         $this->assertSame(30, $price->getValue());
 
-        $price = (new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")))
+        $price = (new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("2201", "CZE")))
             ->add($price);
         $price->add(clone $price);
 
@@ -59,13 +61,13 @@ class PriceAddingTest extends TestCase
      */
     public function testAddingCombined(): void
     {
-        $price = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
-        $price->add(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
-        $price->add(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price = new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
+        $price->add(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
+        $price->add(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
 
         $this->assertSame(30, $price->getValue());
 
-        $price = (new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")))
+        $price = (new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("2201", "CZE")))
             ->add($price);
 
         $this->assertSame(40, $price->getValue());
@@ -82,14 +84,14 @@ class PriceAddingTest extends TestCase
      */
     public function testAddingOnCombined(): void
     {
-        $price = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
-        $price->add(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
-        $price->add(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price = new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
+        $price->add(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
+        $price->add(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
 
         $this->assertSame(30, $price->getValue());
         $this->assertSame(1.5, $price->getValueOfVAT());
 
-        $price->add(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("2201", "CZE")));
+        $price->add(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("2201", "CZE")));
 
         $this->assertSame(40, $price->getValue());
         $this->assertTrue($price->getVAT()->getRate()->isCombined());
@@ -106,13 +108,13 @@ class PriceAddingTest extends TestCase
      */
     public function testAddingDifferentVAT(): void
     {
-        $price = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $price = new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
 
         $this->assertSame(10, $price->getValue());
         $this->assertSame(10, $price->getNumericalValue()->getValue(2));
         $this->assertSame(1.5, $price->getValueOfVAT());
 
-        $price->add(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("07", "CZE")));
+        $price->add(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("07", "CZE")));
 
         $this->assertSame(20, $price->getValue());
         $this->assertSame(20, $price->getValue());
@@ -132,12 +134,12 @@ class PriceAddingTest extends TestCase
      */
     public function testAddingSameVAT(): void
     {
-        $price = new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE"));
+        $price = new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE"));
 
         $this->assertSame(10, $price->getValue());
         $this->assertSame(10, $price->getNumericalValue()->getValue(2));
 
-        $price->add(new Price(10, Currency::get("CZK"), ProxyResolver::retrieveByCategory("9705 00 00", "CZE")));
+        $price->add(new Price(10, Currency::get("CZK"), $this->retrieveVATByCategory("9705 00 00", "CZE")));
 
         $this->assertSame(20, $price->getValue());
         $this->assertSame(20, $price->getNumericalValue()->getValue(2));
@@ -153,7 +155,9 @@ class PriceAddingTest extends TestCase
     {
         parent::setUp();
 
-        ProxyResolver::setResolver(VATResolver::class);
+        $vatHelper = new VATResolver();
+
+        PriceCalc::setVATManager(new Manager($vatHelper, $vatHelper, $vatHelper));
 
         // Setting conversion rate between CZK and EUR => 1 EUR = 25 CZK
         UnitConvertor::$unitConvertors[\MiBo\Prices\Quantities\Price::class] = function(Price $price, Currency $unit) {
@@ -165,5 +169,10 @@ class PriceAddingTest extends TestCase
 
             return $price->getNumericalValue()->divide(25);
         };
+    }
+
+    protected function retrieveVATByCategory(string $category, string $country): VAT
+    {
+        return PriceCalc::getVATManager()->retrieveVAT(new TestingClassification($category), $country);
     }
 }

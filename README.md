@@ -26,7 +26,11 @@ composer require mibo/prices
 
 ### Usage
 ```php
-$price = new \MiBo\Prices\Price(10, \MiBo\Prices\Units\Price\Currency::get("EUR"), \MiBo\VAT\VAT::get("SVK"));
+$price = new \MiBo\Prices\Price(
+    10,
+    \MiBo\Prices\Units\Price\Currency::get("EUR"),
+    \MiBo\Prices\Calculators\PriceCalc::getVATManager()->retrieveVAT($classification, 'SVK')
+);
 $price->getValue(); // 10
 $price->getValueOfVAT(); // 2 (20% of 10 for the day of writing this)
 $price->getValueWithVAT(); // 12 (10 + 2)

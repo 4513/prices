@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace MiBo\Prices\Tests\Core\PriceProperty;
 
+use DateTime;
+use MiBo\Prices\Calculators\PriceCalc;
 use MiBo\Prices\Price;
+use MiBo\Prices\Tests\TestingClassification;
 use MiBo\Prices\Tests\VATResolver;
 use MiBo\Prices\Units\Price\Currency;
 use MiBo\VAT\Enums\VATRate;
-use MiBo\VAT\Resolvers\ProxyResolver;
+use MiBo\VAT\Manager;
 use MiBo\VAT\VAT;
 use PHPUnit\Framework\TestCase;
 
@@ -38,7 +41,7 @@ class VATRelatedTest extends TestCase
     {
         $price = new Price(100, Currency::get());
 
-        $this->assertTrue($price->getVAT()->getRate()->isNone());
+        $this->assertTrue($price->getVAT()->getRate()->isAny());
     }
 
     /**
@@ -56,7 +59,11 @@ class VATRelatedTest extends TestCase
         $this->assertEquals(0, $price->getValueOfVAT());
         $this->assertSame(100, $price->getValueWithVAT());
 
-        $price = new Price(100, Currency::get(), VAT::get("CZE"));
+        $price = new Price(
+            100,
+            Currency::get(),
+            VAT::get("CZE", VATRate::STANDARD, new TestingClassification('21'), new DateTime())
+        );
 
         $this->assertSame(21.0, $price->getValueOfVAT());
         $this->assertSame(121.0, $price->getValueWithVAT());
@@ -71,7 +78,11 @@ class VATRelatedTest extends TestCase
      */
     public function testConvertVAT(): void
     {
-        $price = new Price(100, Currency::get(), VAT::get("CZE"));
+        $price = new Price(
+            100,
+            Currency::get(),
+            VAT::get("CZE", VATRate::STANDARD, new TestingClassification('21'), new DateTime())
+        );
 
         $this->assertSame(121.0, $price->getValueWithVAT());
 
@@ -87,6 +98,8 @@ class VATRelatedTest extends TestCase
     {
         parent::setUp();
 
-        ProxyResolver::setResolver(VATResolver::class);
+        $vatHelper = new VATResolver();
+
+        PriceCalc::setVATManager(new Manager($vatHelper, $vatHelper, $vatHelper));
     }
 }

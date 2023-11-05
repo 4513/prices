@@ -10,9 +10,11 @@ use DomainException;
 use MiBo\Prices\Contracts\PriceCalculatorHelper;
 use MiBo\Prices\Contracts\PriceComparer;
 use MiBo\Prices\Contracts\PriceInterface;
+use MiBo\Prices\Taxonomies\CombinedTaxonomy;
 use MiBo\VAT\Enums\VATRate;
-use MiBo\VAT\Resolvers\ProxyResolver;
+use MiBo\VAT\Manager;
 use MiBo\VAT\VAT;
+use ValueError;
 
 /**
  * Class PriceCalc
@@ -34,6 +36,8 @@ class PriceCalc
 
     private static ?PriceComparer $comparerHelper = null;
 
+    private static ?Manager $vatManager = null;
+
     /** @var \Closure(\MiBo\Prices\Contracts\PriceInterface): (int|float)|null */
     public static ?Closure $getValueOfVAT = null;
 
@@ -44,7 +48,7 @@ class PriceCalc
      *
      * @return int|float
      */
-    public static function getValueOfVAT(PriceInterface $price): int|float
+    final public static function getValueOfVAT(PriceInterface $price): int|float
     {
         if ($price->getVAT()->isNone() || $price->getVAT()->isCombined() || $price->getVAT()->isAny()) {
             return 0;
@@ -55,10 +59,7 @@ class PriceCalc
                 $minorUnitRate = $price->getUnit()->getMinorUnitRate() ?? 0;
                 $vatValue      = round(
                     $price->getNumericalValue()->getValue($price->getUnit()->getMinorUnitRate() ?? 0)
-                    * ProxyResolver::getPercentageOf(
-                        $price->getVAT(),
-                        method_exists($price, 'getDateTime') ? $price->getDateTime() : null
-                    ),
+                    * (self::$vatManager?->getValueOfVAT($price->getVAT()) ?? 1),
                     $minorUnitRate
                 );
 
@@ -101,8 +102,10 @@ class PriceCalc
 
                 $combined = true;
                 $vat      = VAT::get(
-                    $addend->getVAT()->getCountryCode(),
-                    VATRate::COMBINED
+                    $vat->getCountryCode(),
+                    VATRate::COMBINED,
+                    CombinedTaxonomy::get(),
+                    $vat->getDate()
                 );
 
                 continue;
@@ -125,7 +128,7 @@ class PriceCalc
      *
      * @return void
      */
-    public static function setValueOfVATClosure(?Closure $closure): void
+    final public static function setValueOfVATClosure(?Closure $closure): void
     {
         self::$getValueOfVAT = $closure;
     }
@@ -135,7 +138,7 @@ class PriceCalc
      *
      * @return void
      */
-    public static function setCalculatorHelper(PriceCalculatorHelper $calculatorHelper): void
+    final public static function setCalculatorHelper(PriceCalculatorHelper $calculatorHelper): void
     {
         self::$calculatorHelper = $calculatorHelper;
     }
@@ -148,6 +151,32 @@ class PriceCalc
     public static function setComparerHelper(PriceComparer $comparerHelper): void
     {
         self::$comparerHelper = $comparerHelper;
+    }
+
+    /**
+     * @since 2.0
+     *
+     * @param \MiBo\VAT\Manager $manager
+     *
+     * @return void
+     */
+    final public static function setVATManager(Manager $manager): void
+    {
+        self::$vatManager = $manager;
+    }
+
+    /**
+     * @since 2.0
+     *
+     * @return \MiBo\VAT\Manager
+     */
+    final public static function getVATManager(): Manager
+    {
+        if (self::$vatManager === null) {
+            throw new ValueError();
+        }
+
+        return self::$vatManager;
     }
 
     /**
