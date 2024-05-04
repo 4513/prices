@@ -92,6 +92,10 @@ class Price extends NumericalProperty implements PriceInterface
             $value = new self($value, $this->unit, $this->vat, $this->time);
         }
 
+        if ($value === $this) {
+            $value = clone $value;
+        }
+
         if ($value->getVAT()->isCombined()) {
             $value->convertToUnit($this->getUnit());
 
