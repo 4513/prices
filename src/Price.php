@@ -315,7 +315,7 @@ class Price extends NumericalProperty implements PriceInterface
      *     VAT: string,
      *     time: string|null,
      *     details: array{
-     *         unit: \MiBo\Prices\Units\Price\Currency,
+     *         unit: array<mixed>,
      *         VAT: \MiBo\VAT\VAT,
      *         prices: array<\MiBo\Prices\Contracts\PriceInterface>
      *     }
@@ -331,7 +331,7 @@ class Price extends NumericalProperty implements PriceInterface
             'VAT'          => $this->getVAT()->getRate()->name,
             'time'         => $this->getDateTime()->format(DateTime::ATOM),
             'details'      => [
-                'unit'   => $this->getUnit(),
+                'unit'   => $this->getUnit()->__debugInfo(),
                 'VAT'    => $this->getVAT(),
                 'prices' => $this->getNestedPrices(),
             ],
